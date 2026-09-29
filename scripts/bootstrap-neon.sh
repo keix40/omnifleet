@@ -22,9 +22,11 @@ run_migration() {
 }
 
 schema_bootstrap_complete() {
-  "${PSQL[@]}" -tAc \
-    "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'dispatch_jobs'" \
-    | grep -q 1
+  local ready
+  ready="$("${PSQL[@]}" -tAc \
+    "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'dispatch_jobs'")"
+  ready="$(echo "$ready" | tr -d '[:space:]')"
+  [[ "$ready" == "1" ]]
 }
 
 ensure_omnifleet_app_role() {
@@ -80,6 +82,19 @@ PY
 
 echo "==> PostGIS"
 "${PSQL[@]}" -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+
+if schema_bootstrap_complete; then
+  echo "==> Existing OmniFleet schema detected; refreshing app role, grants, and demo seed"
+  ensure_omnifleet_app_role
+  finalize_app_grants
+  chmod +x "$ROOT/scripts/seed-demo-users.sh"
+  "$ROOT/scripts/seed-demo-users.sh"
+  echo ""
+  echo "Neon bootstrap refresh complete."
+  echo "Use this DATABASE_URL for the API (omnifleet_app, RLS enforced):"
+  print_app_database_url
+  exit 0
+fi
 
 echo "==> omnifleet_app role (RLS-enforced login)"
 ensure_omnifleet_app_role
