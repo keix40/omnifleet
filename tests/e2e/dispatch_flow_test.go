@@ -68,6 +68,8 @@ func TestVerticalSlice_DispatchETAAndNotification(t *testing.T) {
 		t.Skip("set E2E_COMPOSE=1 when running against docker compose stack")
 	}
 
+	resetGeofenceState(t)
+
 	disp := login(t, "dispatcher@acme.test", "demo-password-change-me", "acme-logistics")
 	driver := login(t, "driver@acme.test", "demo-password-change-me", "acme-logistics")
 

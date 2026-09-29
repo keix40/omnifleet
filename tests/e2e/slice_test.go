@@ -143,6 +143,8 @@ func TestVerticalSlice_TenantScopedWebSocket(t *testing.T) {
 		t.Skip("set E2E_COMPOSE=1 when running against docker compose stack")
 	}
 
+	resetGeofenceState(t)
+
 	acmeDisp := login(t, "dispatcher@acme.test", "demo-password-change-me", "acme-logistics")
 	globexDisp := login(t, "dispatcher@globex.test", "demo-password-change-me", "globex-freight")
 	acmeDriver := login(t, "driver@acme.test", "demo-password-change-me", "acme-logistics")
