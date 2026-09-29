@@ -45,7 +45,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y postgresql-client
           psql -h localhost -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-          CREATE USER neon_owner WITH PASSWORD 'neon_owner_pass' CREATEDB;
+          CREATE USER neon_owner WITH PASSWORD 'neon_owner_pass' CREATEDB CREATEROLE;
           CREATE DATABASE omnifleet OWNER neon_owner;
           SQL
           psql -h localhost -U postgres -d omnifleet -v ON_ERROR_STOP=1 <<'SQL'
