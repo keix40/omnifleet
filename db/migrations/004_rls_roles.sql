@@ -19,6 +19,7 @@ EXCEPTION
 END
 $$;
 
+ALTER TABLE tenants OWNER TO omnifleet_owner;
 ALTER TABLE users OWNER TO omnifleet_owner;
 ALTER TABLE vehicles OWNER TO omnifleet_owner;
 ALTER TABLE geofences OWNER TO omnifleet_owner;

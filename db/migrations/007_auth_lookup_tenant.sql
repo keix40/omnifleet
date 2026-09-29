@@ -24,3 +24,7 @@ REVOKE ALL ON FUNCTION auth_lookup_user(TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT, TEXT) TO omnifleet_app;
 
 ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
+
+-- Login join needs tenant slug resolution under SECURITY DEFINER (omnifleet_owner).
+ALTER TABLE tenants OWNER TO omnifleet_owner;
+GRANT SELECT ON tenants TO omnifleet_app;
