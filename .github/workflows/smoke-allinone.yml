@@ -19,7 +19,73 @@ on:
       - "db/**"
 
 jobs:
-  smoke:
+  smoke-embedded:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: omnifleet
+          POSTGRES_PASSWORD: omnifleet
+          POSTGRES_DB: omnifleet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U omnifleet -d omnifleet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Bootstrap database
+        env:
+          PGPASSWORD: omnifleet
+          PGHOST: localhost
+          PGUSER: omnifleet
+          PGDATABASE: omnifleet
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          chmod +x scripts/bootstrap-db.sh
+          ./scripts/bootstrap-db.sh
+      - name: Start omnifleet-all (embedded NATS)
+        env:
+          DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
+          OMNIFLEET_SHARED_NATS: "1"
+          NATS_EMBEDDED: "1"
+          OMNIFLEET_DEV_MODE: "1"
+          JWT_SECRET: smoke-test-secret-minimum-32-chars-long
+          PORT: "18080"
+        run: |
+          cd cmd/omnifleet-all
+          go run . 2>&1 | tee /tmp/omnifleet-all.log &
+          echo $! > /tmp/omnifleet-all.pid
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:18080/healthz && exit 0
+            sleep 2
+          done
+          cat /tmp/omnifleet-all.log
+          exit 1
+      - name: Log process RSS
+        run: |
+          pid=$(cat /tmp/omnifleet-all.pid)
+          awk '/VmRSS/ {print "omnifleet-all " $0}' /proc/$pid/status
+          grep -E 'VmRSS|embedded NATS|listening' /tmp/omnifleet-all.log || true
+      - name: Smoke test
+        env:
+          SMOKE_TEST: "1"
+          SMOKE_GATEWAY_URL: http://127.0.0.1:18080
+          SMOKE_WS_URL: ws://127.0.0.1:18080
+        run: |
+          cd cmd/omnifleet-all
+          go test -tags smoke -count=1 -timeout 2m .
+      - name: Stop process
+        if: always()
+        run: kill "$(cat /tmp/omnifleet-all.pid)" 2>/dev/null || true
+
+  smoke-external-nats:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -52,28 +118,28 @@ jobs:
           sudo apt-get update && sudo apt-get install -y postgresql-client
           chmod +x scripts/bootstrap-db.sh
           ./scripts/bootstrap-db.sh
-      - name: Start omnifleet-all
+      - name: Start omnifleet-all (external NATS)
         env:
           DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
           NATS_URL: nats://localhost:4222
           OMNIFLEET_SHARED_NATS: "1"
           OMNIFLEET_DEV_MODE: "1"
           JWT_SECRET: smoke-test-secret-minimum-32-chars-long
-          PORT: "18080"
+          PORT: "18081"
         run: |
           cd cmd/omnifleet-all
           go run . &
           echo $! > /tmp/omnifleet-all.pid
           for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:18080/healthz && exit 0
+            curl -sf http://127.0.0.1:18081/healthz && exit 0
             sleep 2
           done
           exit 1
       - name: Smoke test
         env:
           SMOKE_TEST: "1"
-          SMOKE_GATEWAY_URL: http://127.0.0.1:18080
-          SMOKE_WS_URL: ws://127.0.0.1:18080
+          SMOKE_GATEWAY_URL: http://127.0.0.1:18081
+          SMOKE_WS_URL: ws://127.0.0.1:18081
         run: |
           cd cmd/omnifleet-all
           go test -tags smoke -count=1 -timeout 2m .

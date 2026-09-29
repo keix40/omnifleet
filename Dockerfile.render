@@ -15,5 +15,6 @@ FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/omnifleet-all /omnifleet-all
 USER nonroot:nonroot
 ENV OMNIFLEET_SHARED_NATS=1
+ENV NATS_EMBEDDED=1
 EXPOSE 8080
 ENTRYPOINT ["/omnifleet-all"]

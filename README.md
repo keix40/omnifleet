@@ -133,7 +133,7 @@ make tf-validate
 make helm-lint
 ```
 
-## Free deployment (Render + Neon + Synadia + Vercel)
+## Free deployment (Render + Neon + Vercel)
 
 Single-process API for Render’s **free** web tier (512 MB, no private networking):
 
@@ -141,10 +141,11 @@ Single-process API for Render’s **free** web tier (512 MB, no private networki
 |-----------|---------|--------|
 | API | [Render](https://render.com) | Build `Dockerfile.render`, blueprint `render.yaml` (region: **Singapore**) |
 | Postgres | [Neon](https://neon.tech) | Run `scripts/bootstrap-neon.sh` once; see [docs/neon-bootstrap.md](docs/neon-bootstrap.md) |
-| NATS | [Synadia Cloud](https://www.synadia.com/cloud) free | `NATS_URL=tls://connect.ngs.global`, `NATS_TLS=true`, `NATS_CREDS` (`.creds` file contents) |
+| NATS | **Embedded** (default) | `NATS_EMBEDDED=1` — in-process JetStream on loopback; **events are lost on restart** (temp store, 64 MiB RAM / 256 MiB file caps) |
+| NATS (optional) | [Synadia Cloud](https://www.synadia.com/cloud) | Set `NATS_EMBEDDED=0`, `NATS_URL`, `NATS_TLS=true`, `NATS_CREDS` |
 | Dashboard | [Vercel](https://vercel.com) | Root `web/dashboard`; set env vars below |
 
-**Render env (minimum):** `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `NATS_URL`, `NATS_CREDS`, `NATS_TLS=true`, `OMNIFLEET_SHARED_NATS=1`, `OMNIFLEET_APP_PASSWORD` (when using dual-role bootstrap).
+**Render env (minimum):** `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `OMNIFLEET_SHARED_NATS=1`, `NATS_EMBEDDED=1` (default in `render.yaml`), `OMNIFLEET_APP_PASSWORD` (when using dual-role bootstrap).
 
 **Vercel env:**
 
@@ -155,8 +156,8 @@ Local all-in-one:
 
 ```bash
 export OMNIFLEET_SHARED_NATS=1
+export NATS_EMBEDDED=1
 export DATABASE_URL=postgres://omnifleet_app:...@localhost:5432/omnifleet?sslmode=disable
-export NATS_URL=nats://localhost:4222
 export JWT_SECRET=dev-only-change-me-min-32-chars
 export PORT=8080
 go run ./cmd/omnifleet-all
