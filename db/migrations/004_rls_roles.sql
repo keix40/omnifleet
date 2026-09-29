@@ -2,11 +2,13 @@
 
 DO $$
 BEGIN
-    CREATE ROLE omnifleet_owner NOLOGIN;
+    CREATE ROLE omnifleet_owner NOLOGIN BYPASSRLS;
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END
 $$;
+
+ALTER ROLE omnifleet_owner BYPASSRLS;
 
 DO $$
 BEGIN
