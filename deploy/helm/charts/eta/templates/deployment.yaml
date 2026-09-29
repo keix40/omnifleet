@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omnifleet-eta
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: eta
+  template:
+    metadata:
+      labels:
+        app: eta
+    spec:
+      containers:
+        - name: eta
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 50054
+          livenessProbe:
+            grpc:
+              port: 50054
+          readinessProbe:
+            grpc:
+              port: 50054

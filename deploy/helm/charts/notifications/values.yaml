@@ -1,0 +1,4 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/keix40/omnifleet/notifications
+  tag: latest

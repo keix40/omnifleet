@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and start core stack
         run: |
-          docker compose up --build -d postgres nats auth tracking geofencing gateway
+          docker compose up --build -d postgres nats auth tracking geofencing eta dispatch billing notifications gateway
 
       - name: Wait for gateway and seeded auth
         run: |

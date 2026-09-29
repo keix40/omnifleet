@@ -40,7 +40,10 @@ func matchGo(f string) bool {
 }
 
 func matchWeb(f string) bool {
-	return hasPrefix(f, "web/dashboard/") || f == ".github/workflows/web-dashboard.yml"
+	return hasPrefix(f, "web/dashboard/") ||
+		hasPrefix(f, "mobile/driver/") ||
+		f == ".github/workflows/web-dashboard.yml" ||
+		f == ".github/workflows/mobile-driver.yml"
 }
 
 func matchInfra(f string) bool {

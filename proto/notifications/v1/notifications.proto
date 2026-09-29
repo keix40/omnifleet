@@ -4,12 +4,40 @@ package notifications.v1;
 
 option go_package = "github.com/keix40/omnifleet/gen/go/notifications/v1;notificationsv1";
 
-// TODO: email/SMS/push for geofence alerts and dispatch updates.
 service NotificationsService {
   rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetPreferences(GetPreferencesRequest) returns (GetPreferencesResponse);
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
 }
 
 message HealthRequest {}
 message HealthResponse {
   string status = 1;
+  string default_channel = 2;
+}
+
+message NotificationPreferences {
+  string tenant_id = 1;
+  bool alerts_enabled = 2;
+  bool dispatch_enabled = 3;
+  bool eta_enabled = 4;
+  string channel = 5;
+  string webhook_url = 6;
+  string email_to = 7;
+}
+
+message GetPreferencesRequest {
+  string tenant_id = 1;
+}
+
+message GetPreferencesResponse {
+  NotificationPreferences preferences = 1;
+}
+
+message UpdatePreferencesRequest {
+  NotificationPreferences preferences = 1;
+}
+
+message UpdatePreferencesResponse {
+  NotificationPreferences preferences = 1;
 }

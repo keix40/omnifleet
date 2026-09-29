@@ -53,6 +53,14 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
                   key: TRACKING_GRPC_ADDR
+            - name: ETA_GRPC_ADDR
+              value: {{ .Values.grpc.eta | default "omnifleet-eta:50054" | quote }}
+            - name: DISPATCH_GRPC_ADDR
+              value: {{ .Values.grpc.dispatch | default "omnifleet-dispatch:50055" | quote }}
+            - name: BILLING_GRPC_ADDR
+              value: {{ .Values.grpc.billing | default "omnifleet-billing:50056" | quote }}
+            - name: NOTIFICATIONS_GRPC_ADDR
+              value: {{ .Values.grpc.notifications | default "omnifleet-notifications:50057" | quote }}
           livenessProbe:
             httpGet:
               path: /healthz

@@ -22,7 +22,7 @@ compose-down:
 
 helm-lint:
 	helm lint deploy/helm/omnifleet
-	for chart in gateway auth tracking geofencing; do helm lint deploy/helm/charts/$$chart; done
+	for chart in gateway auth tracking geofencing eta dispatch billing notifications; do helm lint deploy/helm/charts/$$chart; done
 
 tf-validate:
 	cd deploy/terraform && terraform init -backend=false && terraform validate

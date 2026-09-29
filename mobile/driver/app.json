@@ -5,6 +5,14 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "platforms": ["ios", "android"],
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": ["location"]
+      }
+    },
+    "android": {
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION"]
+    },
     "extra": {
       "gatewayUrl": "http://localhost:8080"
     }

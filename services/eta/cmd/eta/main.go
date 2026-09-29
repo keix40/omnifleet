@@ -5,35 +5,42 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	etav1 "github.com/keix40/omnifleet/gen/go/eta/v1"
+	"github.com/keix40/omnifleet/services/eta/internal/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-type etaServer struct {
-	etav1.UnimplementedETAServiceServer
-}
-
-func (etaServer) Health(_ context.Context, _ *etav1.HealthRequest) (*etav1.HealthResponse, error) {
-	// TODO: integrate OSRM/GraphHopper and historical Timescale aggregates for ETA confidence bands.
-	return &etav1.HealthResponse{Status: "stub"}, nil
-}
-
 func main() {
 	addr := env("ETA_GRPC_ADDR", ":50054")
+	dsn := env("DATABASE_URL", "")
+	natsURL := env("NATS_URL", "nats://localhost:4222")
+	osrmURL := env("OSRM_BASE_URL", "")
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	svc, cleanup, err := server.New(ctx, dsn, natsURL, osrmURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cleanup()
+
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := grpc.NewServer()
-	etav1.RegisterETAServiceServer(s, etaServer{})
+	gs := grpc.NewServer()
+	etav1.RegisterETAServiceServer(gs, svc)
 	hs := health.NewServer()
-	healthpb.RegisterHealthServer(s, hs)
+	healthpb.RegisterHealthServer(gs, hs)
 	hs.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-	log.Printf("eta service (stub) on %s", addr)
-	log.Fatal(s.Serve(lis))
+	log.Printf("eta service on %s (osrm=%v)", addr, osrmURL != "")
+	log.Fatal(gs.Serve(lis))
 }
 
 func env(k, d string) string {

@@ -19,16 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NotificationsService_Health_FullMethodName = "/notifications.v1.NotificationsService/Health"
+	NotificationsService_Health_FullMethodName            = "/notifications.v1.NotificationsService/Health"
+	NotificationsService_GetPreferences_FullMethodName    = "/notifications.v1.NotificationsService/GetPreferences"
+	NotificationsService_UpdatePreferences_FullMethodName = "/notifications.v1.NotificationsService/UpdatePreferences"
 )
 
 // NotificationsServiceClient is the client API for NotificationsService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// TODO: email/SMS/push for geofence alerts and dispatch updates.
 type NotificationsServiceClient interface {
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*GetPreferencesResponse, error)
+	UpdatePreferences(ctx context.Context, in *UpdatePreferencesRequest, opts ...grpc.CallOption) (*UpdatePreferencesResponse, error)
 }
 
 type notificationsServiceClient struct {
@@ -49,13 +51,33 @@ func (c *notificationsServiceClient) Health(ctx context.Context, in *HealthReque
 	return out, nil
 }
 
+func (c *notificationsServiceClient) GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*GetPreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPreferencesResponse)
+	err := c.cc.Invoke(ctx, NotificationsService_GetPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationsServiceClient) UpdatePreferences(ctx context.Context, in *UpdatePreferencesRequest, opts ...grpc.CallOption) (*UpdatePreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdatePreferencesResponse)
+	err := c.cc.Invoke(ctx, NotificationsService_UpdatePreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationsServiceServer is the server API for NotificationsService service.
 // All implementations must embed UnimplementedNotificationsServiceServer
 // for forward compatibility.
-//
-// TODO: email/SMS/push for geofence alerts and dispatch updates.
 type NotificationsServiceServer interface {
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
+	GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error)
+	UpdatePreferences(context.Context, *UpdatePreferencesRequest) (*UpdatePreferencesResponse, error)
 	mustEmbedUnimplementedNotificationsServiceServer()
 }
 
@@ -68,6 +90,12 @@ type UnimplementedNotificationsServiceServer struct{}
 
 func (UnimplementedNotificationsServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
+}
+func (UnimplementedNotificationsServiceServer) GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPreferences not implemented")
+}
+func (UnimplementedNotificationsServiceServer) UpdatePreferences(context.Context, *UpdatePreferencesRequest) (*UpdatePreferencesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdatePreferences not implemented")
 }
 func (UnimplementedNotificationsServiceServer) mustEmbedUnimplementedNotificationsServiceServer() {}
 func (UnimplementedNotificationsServiceServer) testEmbeddedByValue()                              {}
@@ -108,6 +136,42 @@ func _NotificationsService_Health_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationsService_GetPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationsServiceServer).GetPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationsService_GetPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationsServiceServer).GetPreferences(ctx, req.(*GetPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationsService_UpdatePreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationsServiceServer).UpdatePreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationsService_UpdatePreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationsServiceServer).UpdatePreferences(ctx, req.(*UpdatePreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationsService_ServiceDesc is the grpc.ServiceDesc for NotificationsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +182,14 @@ var NotificationsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Health",
 			Handler:    _NotificationsService_Health_Handler,
+		},
+		{
+			MethodName: "GetPreferences",
+			Handler:    _NotificationsService_GetPreferences_Handler,
+		},
+		{
+			MethodName: "UpdatePreferences",
+			Handler:    _NotificationsService_UpdatePreferences_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

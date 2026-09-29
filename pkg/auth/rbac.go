@@ -27,32 +27,51 @@ const (
 	PermViewFleet       Permission = "fleet:view"
 	PermManageGeofences Permission = "geofences:manage"
 	PermDispatchJobs    Permission = "dispatch:manage"
+	PermViewDispatch    Permission = "dispatch:view"
+	PermUpdateOwnJobs   Permission = "dispatch:driver_update"
+	PermViewETA         Permission = "eta:view"
 	PermBillingAdmin    Permission = "billing:admin"
+	PermViewBilling     Permission = "billing:view"
+	PermManageNotifications Permission = "notifications:manage"
 )
 
 var rolePermissions = map[Role]map[Permission]bool{
 	RoleAdmin: {
-		PermLogin:           true,
-		PermIngestPosition:  true,
-		PermViewFleet:       true,
-		PermManageGeofences: true,
-		PermDispatchJobs:    true,
-		PermBillingAdmin:    true,
+		PermLogin:               true,
+		PermIngestPosition:      true,
+		PermViewFleet:           true,
+		PermManageGeofences:     true,
+		PermDispatchJobs:        true,
+		PermViewDispatch:        true,
+		PermUpdateOwnJobs:       true,
+		PermViewETA:             true,
+		PermBillingAdmin:        true,
+		PermViewBilling:         true,
+		PermManageNotifications: true,
 	},
 	RoleDispatcher: {
 		PermLogin:           true,
 		PermViewFleet:       true,
 		PermManageGeofences: true,
 		PermDispatchJobs:    true,
+		PermViewDispatch:    true,
+		PermViewETA:         true,
+		PermViewBilling:     true,
 	},
 	RoleDriver: {
 		PermLogin:          true,
 		PermIngestPosition: true,
 		PermViewFleet:      true,
+		PermViewDispatch:   true,
+		PermUpdateOwnJobs:  true,
+		PermViewETA:        true,
 	},
 	RoleCustomer: {
-		PermLogin:     true,
-		PermViewFleet: true,
+		PermLogin:       true,
+		PermViewFleet:   true,
+		PermViewDispatch: true,
+		PermViewETA:     true,
+		PermViewBilling: true,
 	},
 }
 

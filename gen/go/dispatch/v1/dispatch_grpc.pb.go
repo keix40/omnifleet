@@ -19,16 +19,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DispatchService_Health_FullMethodName = "/dispatch.v1.DispatchService/Health"
+	DispatchService_Health_FullMethodName            = "/dispatch.v1.DispatchService/Health"
+	DispatchService_CreateJob_FullMethodName         = "/dispatch.v1.DispatchService/CreateJob"
+	DispatchService_GetJob_FullMethodName            = "/dispatch.v1.DispatchService/GetJob"
+	DispatchService_ListJobs_FullMethodName          = "/dispatch.v1.DispatchService/ListJobs"
+	DispatchService_AssignJob_FullMethodName         = "/dispatch.v1.DispatchService/AssignJob"
+	DispatchService_AutoAssignNearest_FullMethodName = "/dispatch.v1.DispatchService/AutoAssignNearest"
+	DispatchService_UpdateJobStatus_FullMethodName   = "/dispatch.v1.DispatchService/UpdateJobStatus"
 )
 
 // DispatchServiceClient is the client API for DispatchService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// TODO: assign jobs to vehicles, optimize routes, dispatcher workflows.
 type DispatchServiceClient interface {
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*CreateJobResponse, error)
+	GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error)
+	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
+	AssignJob(ctx context.Context, in *AssignJobRequest, opts ...grpc.CallOption) (*AssignJobResponse, error)
+	AutoAssignNearest(ctx context.Context, in *AutoAssignNearestRequest, opts ...grpc.CallOption) (*AutoAssignNearestResponse, error)
+	UpdateJobStatus(ctx context.Context, in *UpdateJobStatusRequest, opts ...grpc.CallOption) (*UpdateJobStatusResponse, error)
 }
 
 type dispatchServiceClient struct {
@@ -49,13 +59,77 @@ func (c *dispatchServiceClient) Health(ctx context.Context, in *HealthRequest, o
 	return out, nil
 }
 
+func (c *dispatchServiceClient) CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*CreateJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateJobResponse)
+	err := c.cc.Invoke(ctx, DispatchService_CreateJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dispatchServiceClient) GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetJobResponse)
+	err := c.cc.Invoke(ctx, DispatchService_GetJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dispatchServiceClient) ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListJobsResponse)
+	err := c.cc.Invoke(ctx, DispatchService_ListJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dispatchServiceClient) AssignJob(ctx context.Context, in *AssignJobRequest, opts ...grpc.CallOption) (*AssignJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignJobResponse)
+	err := c.cc.Invoke(ctx, DispatchService_AssignJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dispatchServiceClient) AutoAssignNearest(ctx context.Context, in *AutoAssignNearestRequest, opts ...grpc.CallOption) (*AutoAssignNearestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AutoAssignNearestResponse)
+	err := c.cc.Invoke(ctx, DispatchService_AutoAssignNearest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dispatchServiceClient) UpdateJobStatus(ctx context.Context, in *UpdateJobStatusRequest, opts ...grpc.CallOption) (*UpdateJobStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateJobStatusResponse)
+	err := c.cc.Invoke(ctx, DispatchService_UpdateJobStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DispatchServiceServer is the server API for DispatchService service.
 // All implementations must embed UnimplementedDispatchServiceServer
 // for forward compatibility.
-//
-// TODO: assign jobs to vehicles, optimize routes, dispatcher workflows.
 type DispatchServiceServer interface {
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
+	CreateJob(context.Context, *CreateJobRequest) (*CreateJobResponse, error)
+	GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error)
+	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
+	AssignJob(context.Context, *AssignJobRequest) (*AssignJobResponse, error)
+	AutoAssignNearest(context.Context, *AutoAssignNearestRequest) (*AutoAssignNearestResponse, error)
+	UpdateJobStatus(context.Context, *UpdateJobStatusRequest) (*UpdateJobStatusResponse, error)
 	mustEmbedUnimplementedDispatchServiceServer()
 }
 
@@ -68,6 +142,24 @@ type UnimplementedDispatchServiceServer struct{}
 
 func (UnimplementedDispatchServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
+}
+func (UnimplementedDispatchServiceServer) CreateJob(context.Context, *CreateJobRequest) (*CreateJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateJob not implemented")
+}
+func (UnimplementedDispatchServiceServer) GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetJob not implemented")
+}
+func (UnimplementedDispatchServiceServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListJobs not implemented")
+}
+func (UnimplementedDispatchServiceServer) AssignJob(context.Context, *AssignJobRequest) (*AssignJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AssignJob not implemented")
+}
+func (UnimplementedDispatchServiceServer) AutoAssignNearest(context.Context, *AutoAssignNearestRequest) (*AutoAssignNearestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AutoAssignNearest not implemented")
+}
+func (UnimplementedDispatchServiceServer) UpdateJobStatus(context.Context, *UpdateJobStatusRequest) (*UpdateJobStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateJobStatus not implemented")
 }
 func (UnimplementedDispatchServiceServer) mustEmbedUnimplementedDispatchServiceServer() {}
 func (UnimplementedDispatchServiceServer) testEmbeddedByValue()                         {}
@@ -108,6 +200,114 @@ func _DispatchService_Health_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DispatchService_CreateJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).CreateJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_CreateJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).CreateJob(ctx, req.(*CreateJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DispatchService_GetJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).GetJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_GetJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).GetJob(ctx, req.(*GetJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DispatchService_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).ListJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_ListJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).ListJobs(ctx, req.(*ListJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DispatchService_AssignJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).AssignJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_AssignJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).AssignJob(ctx, req.(*AssignJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DispatchService_AutoAssignNearest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutoAssignNearestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).AutoAssignNearest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_AutoAssignNearest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).AutoAssignNearest(ctx, req.(*AutoAssignNearestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DispatchService_UpdateJobStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateJobStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DispatchServiceServer).UpdateJobStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DispatchService_UpdateJobStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DispatchServiceServer).UpdateJobStatus(ctx, req.(*UpdateJobStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DispatchService_ServiceDesc is the grpc.ServiceDesc for DispatchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +318,30 @@ var DispatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Health",
 			Handler:    _DispatchService_Health_Handler,
+		},
+		{
+			MethodName: "CreateJob",
+			Handler:    _DispatchService_CreateJob_Handler,
+		},
+		{
+			MethodName: "GetJob",
+			Handler:    _DispatchService_GetJob_Handler,
+		},
+		{
+			MethodName: "ListJobs",
+			Handler:    _DispatchService_ListJobs_Handler,
+		},
+		{
+			MethodName: "AssignJob",
+			Handler:    _DispatchService_AssignJob_Handler,
+		},
+		{
+			MethodName: "AutoAssignNearest",
+			Handler:    _DispatchService_AutoAssignNearest_Handler,
+		},
+		{
+			MethodName: "UpdateJobStatus",
+			Handler:    _DispatchService_UpdateJobStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

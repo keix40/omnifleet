@@ -19,6 +19,12 @@ func TestRBAC_DispatcherCanViewFleet(t *testing.T) {
 }
 
 func TestRBAC_AdminHasBilling(t *testing.T) {
+	if !auth.HasPermission(auth.RoleDriver, auth.PermViewDispatch) {
+		t.Fatal("driver should view assigned jobs")
+	}
+	if auth.HasPermission(auth.RoleCustomer, auth.PermDispatchJobs) {
+		t.Fatal("customer must not manage dispatch")
+	}
 	if !auth.HasPermission(auth.RoleAdmin, auth.PermBillingAdmin) {
 		t.Fatal("admin should manage billing")
 	}

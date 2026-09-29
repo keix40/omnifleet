@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ETAService_Health_FullMethodName = "/eta.v1.ETAService/Health"
+	ETAService_Health_FullMethodName     = "/eta.v1.ETAService/Health"
+	ETAService_ComputeETA_FullMethodName = "/eta.v1.ETAService/ComputeETA"
 )
 
 // ETAServiceClient is the client API for ETAService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// TODO: traffic-aware ETA using historical GPS and routing providers.
 type ETAServiceClient interface {
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	ComputeETA(ctx context.Context, in *ComputeETARequest, opts ...grpc.CallOption) (*ComputeETAResponse, error)
 }
 
 type eTAServiceClient struct {
@@ -49,13 +49,22 @@ func (c *eTAServiceClient) Health(ctx context.Context, in *HealthRequest, opts .
 	return out, nil
 }
 
+func (c *eTAServiceClient) ComputeETA(ctx context.Context, in *ComputeETARequest, opts ...grpc.CallOption) (*ComputeETAResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ComputeETAResponse)
+	err := c.cc.Invoke(ctx, ETAService_ComputeETA_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ETAServiceServer is the server API for ETAService service.
 // All implementations must embed UnimplementedETAServiceServer
 // for forward compatibility.
-//
-// TODO: traffic-aware ETA using historical GPS and routing providers.
 type ETAServiceServer interface {
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
+	ComputeETA(context.Context, *ComputeETARequest) (*ComputeETAResponse, error)
 	mustEmbedUnimplementedETAServiceServer()
 }
 
@@ -68,6 +77,9 @@ type UnimplementedETAServiceServer struct{}
 
 func (UnimplementedETAServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
+}
+func (UnimplementedETAServiceServer) ComputeETA(context.Context, *ComputeETARequest) (*ComputeETAResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ComputeETA not implemented")
 }
 func (UnimplementedETAServiceServer) mustEmbedUnimplementedETAServiceServer() {}
 func (UnimplementedETAServiceServer) testEmbeddedByValue()                    {}
@@ -108,6 +120,24 @@ func _ETAService_Health_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ETAService_ComputeETA_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ComputeETARequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ETAServiceServer).ComputeETA(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ETAService_ComputeETA_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ETAServiceServer).ComputeETA(ctx, req.(*ComputeETARequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ETAService_ServiceDesc is the grpc.ServiceDesc for ETAService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +148,10 @@ var ETAService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Health",
 			Handler:    _ETAService_Health_Handler,
+		},
+		{
+			MethodName: "ComputeETA",
+			Handler:    _ETAService_ComputeETA_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

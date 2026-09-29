@@ -26,6 +26,11 @@ for f in "${CHANGED[@]}"; do
       ;;
   esac
   case "$f" in
+    mobile/driver/*|.github/workflows/mobile-driver.yml)
+      needs_web=1
+      ;;
+  esac
+  case "$f" in
     deploy/terraform/*|deploy/helm/*|.github/workflows/infra.yml)
       needs_infra=1
       ;;

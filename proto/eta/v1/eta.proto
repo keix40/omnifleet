@@ -2,14 +2,32 @@ syntax = "proto3";
 
 package eta.v1;
 
+import "common/v1/common.proto";
+
 option go_package = "github.com/keix40/omnifleet/gen/go/eta/v1;etav1";
 
-// TODO: traffic-aware ETA using historical GPS and routing providers.
 service ETAService {
   rpc Health(HealthRequest) returns (HealthResponse);
+  rpc ComputeETA(ComputeETARequest) returns (ComputeETAResponse);
 }
 
 message HealthRequest {}
 message HealthResponse {
   string status = 1;
+}
+
+message ComputeETARequest {
+  string tenant_id = 1;
+  string vehicle_id = 2;
+  common.v1.GeoPoint destination = 3;
+  bool publish_update = 4;
+}
+
+message ComputeETAResponse {
+  string vehicle_id = 1;
+  double distance_meters = 2;
+  double duration_seconds = 3;
+  int64 eta_unix = 4;
+  string routing_provider = 5;
+  common.v1.GeoPoint origin = 6;
 }

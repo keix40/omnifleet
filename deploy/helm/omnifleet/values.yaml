@@ -30,3 +30,19 @@ tracking:
 geofencing:
   enabled: true
   replicaCount: 2
+
+eta:
+  enabled: true
+  replicaCount: 2
+
+dispatch:
+  enabled: true
+  replicaCount: 2
+
+billing:
+  enabled: true
+  replicaCount: 2
+
+notifications:
+  enabled: true
+  replicaCount: 2
