@@ -9,3 +9,4 @@ web/dashboard/node_modules/
 *.tfstate*
 .idea/
 .vscode/
+cmd/omnifleet-all/omnifleet-all
