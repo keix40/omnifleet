@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SEED_DEMO_PASSWORD="${SEED_DEMO_PASSWORD:-demo-password-change-me}"
 export SEED_DEMO_PASSWORD
 
-HASH="$(cd "$ROOT" && go run ./scripts/seedhash)"
+HASH="$(cd "$ROOT/scripts/seedhash" && GOWORK=off go run .)"
 
 if [[ -n "${DATABASE_URL:-}" ]]; then
   PSQL=(psql "$DATABASE_URL" -v ON_ERROR_STOP=1)

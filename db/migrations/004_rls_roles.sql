@@ -2,7 +2,7 @@
 
 DO $$
 BEGIN
-    CREATE ROLE omnifleet_owner NOLOGIN BYPASSRLS;
+    CREATE ROLE omnifleet_owner NOLOGIN;
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END
