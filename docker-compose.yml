@@ -54,11 +54,14 @@ services:
     environment:
       DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
       NATS_URL: nats://nats:4222
+      GEOFENCING_GRPC_ADDR: geofencing:50053
       TRACKING_GRPC_ADDR: ":50052"
     depends_on:
       postgres:
         condition: service_healthy
       nats:
+        condition: service_started
+      geofencing:
         condition: service_started
     ports:
       - "50052:50052"

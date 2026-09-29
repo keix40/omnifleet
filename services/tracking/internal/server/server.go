@@ -5,20 +5,26 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	geofencingv1 "github.com/keix40/omnifleet/gen/go/geofencing/v1"
+	commonv1 "github.com/keix40/omnifleet/gen/go/common/v1"
 	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	"github.com/keix40/omnifleet/pkg/db"
 	"github.com/keix40/omnifleet/pkg/events"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Server struct {
 	trackingv1.UnimplementedTrackingServiceServer
-	pool      *pgxpool.Pool
-	publisher *events.Publisher
+	pool       *pgxpool.Pool
+	publisher  *events.Publisher
+	geoClient  geofencingv1.GeofencingServiceClient
+	geoConn    *grpc.ClientConn
 }
 
-func New(dsn, natsURL string) (*Server, func(), error) {
+func New(dsn, natsURL, geofencingAddr string) (*Server, func(), error) {
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, func() {}, err
@@ -33,11 +39,26 @@ func New(dsn, natsURL string) (*Server, func(), error) {
 		pool.Close()
 		return nil, func() {}, err
 	}
+	var geoClient geofencingv1.GeofencingServiceClient
+	var geoConn *grpc.ClientConn
+	if geofencingAddr != "" {
+		conn, err := grpc.NewClient(geofencingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			nc.Close()
+			pool.Close()
+			return nil, func() {}, err
+		}
+		geoConn = conn
+		geoClient = geofencingv1.NewGeofencingServiceClient(conn)
+	}
 	cleanup := func() {
+		if geoConn != nil {
+			geoConn.Close()
+		}
 		nc.Close()
 		pool.Close()
 	}
-	return &Server{pool: pool, publisher: pub}, cleanup, nil
+	return &Server{pool: pool, publisher: pub, geoClient: geoClient, geoConn: geoConn}, cleanup, nil
 }
 
 func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPositionRequest) (*trackingv1.IngestPositionResponse, error) {
@@ -73,6 +94,17 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 		RecordedAt: recordedAt.Unix(),
 	}
 	_ = s.publisher.PublishPosition(ctx, ev)
+
+	if s.geoClient != nil {
+		_, _ = s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
+			TenantId:  req.TenantId,
+			VehicleId: req.VehicleId,
+			Point: &commonv1.GeoPoint{
+				Latitude:  req.Point.Latitude,
+				Longitude: req.Point.Longitude,
+			},
+		})
+	}
 
 	return &trackingv1.IngestPositionResponse{PositionId: positionID, Accepted: true}, nil
 }
