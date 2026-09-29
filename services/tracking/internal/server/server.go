@@ -2,75 +2,23 @@ package server
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	geofencingv1 "github.com/keix40/omnifleet/gen/go/geofencing/v1"
-	commonv1 "github.com/keix40/omnifleet/gen/go/common/v1"
 	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	"github.com/keix40/omnifleet/pkg/db"
 	"github.com/keix40/omnifleet/pkg/events"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Server struct {
 	trackingv1.UnimplementedTrackingServiceServer
-	pool       *pgxpool.Pool
-	publisher  *events.Publisher
-	geoClient  geofencingv1.GeofencingServiceClient
-	geoConn    *grpc.ClientConn
-	geoStateMu sync.Mutex
-	geoInside  map[string]bool
+	pool      *pgxpool.Pool
+	publisher *events.Publisher
 }
 
-func (s *Server) publishGeofenceAlerts(ctx context.Context, tenantID, vehicleID string, lat, lon float64) {
-	if s.geoClient != nil {
-		if geoResp, err := s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
-			TenantId:  tenantID,
-			VehicleId: vehicleID,
-			Point:     &commonv1.GeoPoint{Latitude: lat, Longitude: lon},
-		}); err == nil {
-			for _, e := range geoResp.Events {
-				_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
-					TenantID:     tenantID,
-					VehicleID:    vehicleID,
-					GeofenceID:   e.GeofenceId,
-					GeofenceName: e.GeofenceName,
-					EventType:    e.EventType,
-					Message:      "Geofence " + e.EventType + ": " + e.GeofenceName,
-				})
-			}
-			if len(geoResp.Events) > 0 {
-				return
-			}
-		}
-	}
-	// Fallback for local compose when async geofencing path is unavailable.
-	inside := lat >= 37.760 && lat <= 37.800 && lon >= -122.450 && lon <= -122.400
-	s.geoStateMu.Lock()
-	if s.geoInside == nil {
-		s.geoInside = make(map[string]bool)
-	}
-	wasInside := s.geoInside[vehicleID]
-	s.geoInside[vehicleID] = inside
-	s.geoStateMu.Unlock()
-	if inside && !wasInside {
-		_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
-			TenantID:     tenantID,
-			VehicleID:    vehicleID,
-			GeofenceID:   "99999999-9999-9999-9999-999999999901",
-			GeofenceName: "Acme SF Depot",
-			EventType:    "enter",
-			Message:      "Vehicle entered geofence Acme SF Depot",
-		})
-	}
-}
-
-func New(dsn, natsURL, geofencingAddr string) (*Server, func(), error) {
+func New(dsn, natsURL string) (*Server, func(), error) {
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, func() {}, err
@@ -85,32 +33,11 @@ func New(dsn, natsURL, geofencingAddr string) (*Server, func(), error) {
 		pool.Close()
 		return nil, func() {}, err
 	}
-	var geoClient geofencingv1.GeofencingServiceClient
-	var geoConn *grpc.ClientConn
-	if geofencingAddr != "" {
-		conn, err := grpc.NewClient(geofencingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			nc.Close()
-			pool.Close()
-			return nil, func() {}, err
-		}
-		geoConn = conn
-		geoClient = geofencingv1.NewGeofencingServiceClient(conn)
-	}
 	cleanup := func() {
-		if geoConn != nil {
-			geoConn.Close()
-		}
 		nc.Close()
 		pool.Close()
 	}
-	return &Server{
-		pool:      pool,
-		publisher: pub,
-		geoClient: geoClient,
-		geoConn:   geoConn,
-		geoInside: make(map[string]bool),
-	}, cleanup, nil
+	return &Server{pool: pool, publisher: pub}, cleanup, nil
 }
 
 func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPositionRequest) (*trackingv1.IngestPositionResponse, error) {
@@ -145,9 +72,9 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 		HeadingDeg: req.Point.HeadingDeg,
 		RecordedAt: recordedAt.Unix(),
 	}
-	_ = s.publisher.PublishPosition(ctx, ev)
-
-	s.publishGeofenceAlerts(ctx, req.TenantId, req.VehicleId, req.Point.Latitude, req.Point.Longitude)
+	if err := s.publisher.PublishPosition(ctx, ev); err != nil {
+		return nil, err
+	}
 
 	return &trackingv1.IngestPositionResponse{PositionId: positionID, Accepted: true}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	geofencingv1 "github.com/keix40/omnifleet/gen/go/geofencing/v1"
 	"github.com/keix40/omnifleet/pkg/db"
@@ -53,6 +54,7 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 	return s, cleanup, nil
 }
 
+// RunConsumer processes position events from JetStream (primary geofencing path).
 func (s *Server) RunConsumer(ctx context.Context) error {
 	_, err := s.js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
 		Name:     events.StreamFleet,
@@ -69,7 +71,7 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = cons.Consume(func(msg jetstream.Msg) {
+	cc, err := cons.Consume(func(msg jetstream.Msg) {
 		if !strings.HasSuffix(msg.Subject(), ".positions") {
 			_ = msg.Ack()
 			return
@@ -79,18 +81,24 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 			_ = msg.Term()
 			return
 		}
-		if eventsOut, err := s.evaluateInternal(ctx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude); err != nil {
+		msgCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if _, err := s.evaluateInternal(msgCtx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude); err != nil {
 			log.Printf("geofence evaluate: %v", err)
 			_ = msg.Nak()
 			return
-		} else if len(eventsOut) > 0 {
-			log.Printf("geofence events: %+v", eventsOut)
 		}
 		_ = msg.Ack()
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	<-ctx.Done()
+	cc.Stop()
+	return ctx.Err()
 }
 
+// EvaluatePosition is for health checks and manual/debug invocation; production uses NATS consumer.
 func (s *Server) EvaluatePosition(ctx context.Context, req *geofencingv1.EvaluatePositionRequest) (*geofencingv1.EvaluatePositionResponse, error) {
 	eventsOut, err := s.evaluateInternal(ctx, req.TenantId, req.VehicleId, req.Point.Latitude, req.Point.Longitude)
 	if err != nil {
@@ -115,6 +123,7 @@ type geofenceEval struct {
 
 func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID string, lat, lon float64) ([]geofenceEval, error) {
 	var out []geofenceEval
+	var pendingAlerts []events.AlertEvent
 	err := db.WithTenant(ctx, s.pool, tenantID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT g.id::text, g.name,
@@ -159,20 +168,27 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 				if err != nil {
 					return err
 				}
-				alert := events.AlertEvent{
+				pendingAlerts = append(pendingAlerts, events.AlertEvent{
 					TenantID:     tenantID,
 					VehicleID:    vehicleID,
 					GeofenceID:   gfID,
 					GeofenceName: name,
 					EventType:    eventType,
 					Message:      fmt.Sprintf("Vehicle %s %s geofence %s", vehicleID, eventType, name),
-				}
-				_ = s.publisher.PublishAlert(ctx, alert)
+				})
 			}
 		}
 		return rows.Err()
 	})
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	for _, alert := range pendingAlerts {
+		if err := s.publisher.PublishAlert(ctx, alert); err != nil {
+			return out, fmt.Errorf("publish alert: %w", err)
+		}
+	}
+	return out, nil
 }
 
 func (s *Server) Health(ctx context.Context, _ *geofencingv1.HealthRequest) (*geofencingv1.HealthResponse, error) {

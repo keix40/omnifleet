@@ -25,6 +25,7 @@ flowchart LR
   GW --> TRK
   TRK --> PG
   TRK -->|fleet.tenant.positions| NATS
+  TRK -.->|no gRPC on ingest| GEO
   GEO -->|consume positions| NATS
   GEO --> PG
   GEO -->|fleet.tenant.alerts| NATS
@@ -65,8 +66,8 @@ flowchart LR
 
 1. Driver (simulator) logs in → receives JWT scoped to tenant **Acme Logistics**.
 2. `POST /api/v1/tracking/positions` → gateway → tracking gRPC.
-3. Tracking writes `gps_positions` hypertable and publishes `fleet.<tenant_id>.positions`.
-4. Geofencing consumer evaluates PostGIS polygons, updates state, publishes `fleet.<tenant_id>.alerts` on enter/exit.
+3. Tracking writes `gps_positions` hypertable and publishes `fleet.<tenant_id>.positions` (it does **not** call geofencing gRPC).
+4. Geofencing **JetStream consumer** evaluates PostGIS polygons, updates state, publishes `fleet.<tenant_id>.alerts` on enter/exit ([ADR 0004](docs/adr/0004-geofencing-via-nats-consumer.md)).
 5. Gateway JetStream consumer fan-outs JSON to WebSocket clients **for that tenant only**.
 6. Dashboard MapLibre marker moves; alerts panel lists geofence events.
 
@@ -85,6 +86,7 @@ flowchart LR
 | Event bus | **NATS JetStream** | Low ops, fast fan-out, durable streams; see [ADR 0001](docs/adr/0001-nats-jetstream-event-bus.md) |
 | Multi-tenancy | **RLS** | Defense-in-depth; [ADR 0002](docs/adr/0002-shared-db-rls-multi-tenancy.md) |
 | External API | **REST + WS gateway** | [ADR 0003](docs/adr/0003-api-gateway-rest-websocket.md) |
+| Geofencing trigger | **NATS consumer only** | [ADR 0004](docs/adr/0004-geofencing-via-nats-consumer.md) |
 | Contracts | **Protobuf + buf** | `proto/` → `gen/go/` |
 | Maps | **MapLibre** | Open tiles, no vendor lock-in for portfolio demo |
 
@@ -152,6 +154,14 @@ See [docs/preview-environments.md](docs/preview-environments.md) for PR preview 
 | Notifications providers | Stub |
 | Expo driver background GPS | Stub |
 | PR preview automation | Documented |
+
+## CI and branch protection
+
+Path-filtered workflows (Go, dashboard, infra, E2E) only run when relevant files change. Require a single always-on check on `main`:
+
+**`CI Gate / gate`** (workflow [`.github/workflows/ci-gate.yml`](.github/workflows/ci-gate.yml))
+
+The gate job diffs the PR against base, waits for each applicable workflow on the PR head commit, and passes when those runs succeed (or when no filtered workflow applies).
 
 ## Contributing
 

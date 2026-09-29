@@ -17,9 +17,8 @@ func main() {
 	addr := env("TRACKING_GRPC_ADDR", ":50052")
 	dsn := env("DATABASE_URL", "postgres://omnifleet:omnifleet@localhost:5432/omnifleet?sslmode=disable")
 	natsURL := env("NATS_URL", "nats://localhost:4222")
-	geoAddr := env("GEOFENCING_GRPC_ADDR", "localhost:50053")
 
-	svc, cleanup, err := server.New(dsn, natsURL, geoAddr)
+	svc, cleanup, err := server.New(dsn, natsURL)
 	if err != nil {
 		log.Fatalf("tracking: %v", err)
 	}
