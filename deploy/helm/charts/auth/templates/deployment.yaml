@@ -17,6 +17,23 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 50051
+          env:
+            - name: AUTH_GRPC_ADDR
+              value: ":50051"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default "omnifleet-auth-env" }}
+                  key: JWT_SECRET
+            - name: JWT_ISSUER
+              value: {{ .Values.jwt.issuer | default "omnifleet" | quote }}
+            - name: JWT_AUDIENCE
+              value: {{ .Values.jwt.audience | default "omnifleet-api" | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default "omnifleet-auth-env" }}
+                  key: DATABASE_URL
           livenessProbe:
             grpc:
               port: 50051

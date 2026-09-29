@@ -3,28 +3,34 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	authv1 "github.com/keix40/omnifleet/gen/go/auth/v1"
-	"github.com/keix40/omnifleet/pkg/auth"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/keix40/omnifleet/pkg/auth"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
 	authv1.UnimplementedAuthServiceServer
-	pool   *pgxpool.Pool
-	tokens *auth.TokenIssuer
+	pool         *pgxpool.Pool
+	tokens       *auth.TokenIssuer
+	accountLimit *auth.LoginRateLimiter
 }
 
-func New(dsn, jwtSecret, issuer string, ttl time.Duration) (*Server, error) {
+func New(dsn string, jwtSettings auth.JWTSettings, ttl time.Duration) (*Server, error) {
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		pool:   pool,
-		tokens: auth.NewTokenIssuer(jwtSecret, ttl, issuer),
+		pool:         pool,
+		tokens:       auth.NewTokenIssuerFromSettings(jwtSettings, ttl),
+		accountLimit: auth.NewLoginRateLimiter(10, time.Minute),
 	}, nil
 }
 
@@ -33,11 +39,20 @@ func (s *Server) Close() {
 }
 
 func (s *Server) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
+	tenantSlug := strings.TrimSpace(req.TenantSlug)
+	if tenantSlug == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant_slug required")
+	}
+	accountKey := fmt.Sprintf("acct:%s:%s", tenantSlug, strings.ToLower(strings.TrimSpace(req.Email)))
+	if !s.accountLimit.Allow(accountKey) {
+		return nil, status.Error(codes.ResourceExhausted, "too many login attempts")
+	}
+
 	var userID, tenantID, role, hash string
 	err := s.pool.QueryRow(ctx, `
 		SELECT id::text, tenant_id::text, role::text, password_hash
-		FROM auth_lookup_user($1)
-	`, req.Email).Scan(&userID, &tenantID, &role, &hash)
+		FROM auth_lookup_user($1, $2)
+	`, req.Email, tenantSlug).Scan(&userID, &tenantID, &role, &hash)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}

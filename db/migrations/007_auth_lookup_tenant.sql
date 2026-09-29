@@ -1,4 +1,6 @@
--- Login must resolve users before tenant context exists; SECURITY DEFINER bypasses RLS for scoped lookup only.
+-- Scope login lookup to a tenant; never expose cross-tenant email matches.
+
+DROP FUNCTION IF EXISTS auth_lookup_user(TEXT);
 
 CREATE OR REPLACE FUNCTION auth_lookup_user(p_email TEXT, p_tenant_slug TEXT)
 RETURNS TABLE (
@@ -19,3 +21,10 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION auth_lookup_user(TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT, TEXT) TO omnifleet_app;
+
+ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
+
+-- Login join needs tenant slug resolution under SECURITY DEFINER (omnifleet_owner).
+ALTER TABLE tenants OWNER TO omnifleet_owner;
+GRANT SELECT ON tenants TO omnifleet_app;

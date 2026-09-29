@@ -5,6 +5,7 @@ services:
       POSTGRES_USER: omnifleet
       POSTGRES_PASSWORD: omnifleet
       POSTGRES_DB: omnifleet
+      OMNIFLEET_APP_PASSWORD: omnifleet_app
     ports:
       - "5432:5432"
     volumes:
@@ -37,7 +38,7 @@ services:
         SERVICE: auth
     environment:
       DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
-      JWT_SECRET: dev-only-change-me
+      OMNIFLEET_DEV_MODE: "1"
       AUTH_GRPC_ADDR: ":50051"
     depends_on:
       postgres:
@@ -92,11 +93,17 @@ services:
       AUTH_GRPC_ADDR: auth:50051
       TRACKING_GRPC_ADDR: tracking:50052
       NATS_URL: nats://nats:4222
-      JWT_SECRET: dev-only-change-me
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
+      OMNIFLEET_DEV_MODE: "1"
     depends_on:
-      - auth
-      - tracking
-      - nats
+      postgres:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      tracking:
+        condition: service_started
+      nats:
+        condition: service_started
     ports:
       - "8080:8080"
 
@@ -120,6 +127,7 @@ services:
       GATEWAY_URL: http://gateway:8080
       DRIVER_EMAIL: driver@acme.test
       DRIVER_PASSWORD: demo-password-change-me
+      TENANT_SLUG: acme-logistics
       VEHICLE_ID: eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee
     depends_on:
       - gateway

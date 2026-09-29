@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net"
 	"os"
 	"time"
 
 	authv1 "github.com/keix40/omnifleet/gen/go/auth/v1"
+	"github.com/keix40/omnifleet/pkg/auth"
 	"github.com/keix40/omnifleet/services/auth/internal/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -15,12 +15,15 @@ import (
 )
 
 func main() {
+	jwtSettings, err := auth.LoadJWTSettingsFromEnv()
+	if err != nil {
+		log.Fatalf("jwt config: %v", err)
+	}
+
 	addr := env("AUTH_GRPC_ADDR", ":50051")
 	dsn := env("DATABASE_URL", "postgres://omnifleet:omnifleet@localhost:5432/omnifleet?sslmode=disable")
-	jwtSecret := env("JWT_SECRET", "dev-only-change-me")
-	jwtIssuer := env("JWT_ISSUER", "omnifleet-auth")
 
-	svc, err := server.New(dsn, jwtSecret, jwtIssuer, 24*time.Hour)
+	svc, err := server.New(dsn, jwtSettings, 24*time.Hour)
 	if err != nil {
 		log.Fatalf("auth server: %v", err)
 	}
@@ -48,5 +51,3 @@ func env(k, def string) string {
 	}
 	return def
 }
-
-var _ = context.Background

@@ -45,6 +45,7 @@ func main() {
 			log.Printf("consumer stopped: %v", err)
 		}
 	}()
+	go svc.RunOutboxRelay(ctx)
 
 	log.Printf("geofencing gRPC listening on %s", addr)
 	if err := grpcServer.Serve(lis); err != nil {

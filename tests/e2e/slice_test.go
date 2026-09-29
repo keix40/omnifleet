@@ -29,9 +29,13 @@ func wsURL() string {
 	return strings.Replace(gatewayURL(), "http://", "ws://", 1)
 }
 
-func login(t *testing.T, email, password string) string {
+func login(t *testing.T, email, password, tenantSlug string) string {
 	t.Helper()
-	body, _ := json.Marshal(map[string]string{"email": email, "password": password})
+	body, _ := json.Marshal(map[string]string{
+		"email":       email,
+		"password":    password,
+		"tenant_slug": tenantSlug,
+	})
 	resp, err := http.Post(gatewayURL()+"/api/v1/auth/login", "application/json", bytes.NewReader(body))
 	if err != nil {
 		t.Fatalf("login: %v", err)
@@ -139,9 +143,9 @@ func TestVerticalSlice_TenantScopedWebSocket(t *testing.T) {
 		t.Skip("set E2E_COMPOSE=1 when running against docker compose stack")
 	}
 
-	acmeDisp := login(t, "dispatcher@acme.test", "demo-password-change-me")
-	globexDisp := login(t, "dispatcher@globex.test", "demo-password-change-me")
-	acmeDriver := login(t, "driver@acme.test", "demo-password-change-me")
+	acmeDisp := login(t, "dispatcher@acme.test", "demo-password-change-me", "acme-logistics")
+	globexDisp := login(t, "dispatcher@globex.test", "demo-password-change-me", "globex-freight")
+	acmeDriver := login(t, "driver@acme.test", "demo-password-change-me", "acme-logistics")
 
 	acmeWS, acmeCh := listenWS(t, wsTicket(t, acmeDisp))
 	defer acmeWS.Close()

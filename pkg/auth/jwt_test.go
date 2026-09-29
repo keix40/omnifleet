@@ -8,7 +8,7 @@ import (
 )
 
 func TestJWT_RoundTrip(t *testing.T) {
-	issuer := auth.NewTokenIssuer("test-secret", time.Hour, "test")
+	issuer := auth.NewTokenIssuer("01234567890123456789012345678901", time.Hour, "test", "test-api")
 	token, _, err := issuer.Issue("user-1", "tenant-1", "a@test.com", auth.RoleDriver)
 	if err != nil {
 		t.Fatal(err)
@@ -19,5 +19,17 @@ func TestJWT_RoundTrip(t *testing.T) {
 	}
 	if claims.TenantID != "tenant-1" || claims.Role != auth.RoleDriver {
 		t.Fatalf("unexpected claims: %+v", claims)
+	}
+}
+
+func TestJWT_RejectsWrongAudience(t *testing.T) {
+	issuer := auth.NewTokenIssuer("01234567890123456789012345678901", time.Hour, "test", "expected-aud")
+	token, _, err := issuer.Issue("user-1", "tenant-1", "a@test.com", auth.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := auth.NewTokenIssuer("01234567890123456789012345678901", time.Hour, "test", "other-aud")
+	if _, err := other.Parse(token); err == nil {
+		t.Fatal("expected audience mismatch error")
 	}
 }

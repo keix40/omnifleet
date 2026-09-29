@@ -2,14 +2,18 @@ package server
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	"github.com/keix40/omnifleet/pkg/db"
 	"github.com/keix40/omnifleet/pkg/events"
+	"github.com/keix40/omnifleet/pkg/validate"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -41,6 +45,13 @@ func New(dsn, natsURL string) (*Server, func(), error) {
 }
 
 func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPositionRequest) (*trackingv1.IngestPositionResponse, error) {
+	if req.Point == nil {
+		return nil, status.Error(codes.InvalidArgument, "point required")
+	}
+	if err := validate.IngestPosition(req.VehicleId, req.Point.Latitude, req.Point.Longitude); err != nil {
+		return nil, status.Error(codes.InvalidArgument, validate.PublicMessage(err))
+	}
+
 	positionID := uuid.NewString()
 	recordedAt := time.Unix(req.RecordedAtUnix, 0)
 	if req.RecordedAtUnix == 0 {
@@ -59,7 +70,10 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 		return err
 	})
 	if err != nil {
-		return nil, err
+		if isTenantFKViolation(err) {
+			return nil, status.Error(codes.InvalidArgument, "invalid vehicle_id for tenant")
+		}
+		return nil, status.Error(codes.Internal, "failed to store position")
 	}
 
 	ev := events.PositionEvent{
@@ -73,10 +87,14 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 		RecordedAt: recordedAt.Unix(),
 	}
 	if err := s.publisher.PublishPosition(ctx, ev); err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, "failed to publish position")
 	}
 
 	return &trackingv1.IngestPositionResponse{PositionId: positionID, Accepted: true}, nil
+}
+
+func isTenantFKViolation(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "violates foreign key constraint")
 }
 
 func (s *Server) Health(ctx context.Context, _ *trackingv1.HealthRequest) (*trackingv1.HealthResponse, error) {

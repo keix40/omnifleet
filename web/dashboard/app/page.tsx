@@ -27,6 +27,7 @@ export default function HomePage() {
   const [token, setToken] = useState<string | null>(null);
   const [email, setEmail] = useState("dispatcher@acme.test");
   const [password, setPassword] = useState("demo-password-change-me");
+  const [tenantSlug, setTenantSlug] = useState("acme-logistics");
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<PositionEvent | null>(null);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
@@ -37,7 +38,7 @@ export default function HomePage() {
     const resp = await fetch(`${gateway}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, tenant_slug: tenantSlug }),
     });
     if (!resp.ok) {
       setError("Login failed");
@@ -96,6 +97,14 @@ export default function HomePage() {
           <label>
             Email
             <input value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
+          </label>
+          <label>
+            Tenant slug
+            <input
+              value={tenantSlug}
+              onChange={(e) => setTenantSlug(e.target.value)}
+              style={{ width: "100%" }}
+            />
           </label>
           <label>
             Password
