@@ -20,6 +20,39 @@ spec:
           env:
             - name: GATEWAY_HTTP_ADDR
               value: "0.0.0.0:8080"
+            - name: GATEWAY_REPLICA_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
+                  key: JWT_SECRET
+            - name: JWT_ISSUER
+              value: {{ .Values.jwt.issuer | default "omnifleet" | quote }}
+            - name: JWT_AUDIENCE
+              value: {{ .Values.jwt.audience | default "omnifleet-api" | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
+                  key: DATABASE_URL
+            - name: NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
+                  key: NATS_URL
+            - name: AUTH_GRPC_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
+                  key: AUTH_GRPC_ADDR
+            - name: TRACKING_GRPC_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret | default (printf "%s-env" (include "gateway.fullname" .)) }}
+                  key: TRACKING_GRPC_ADDR
           livenessProbe:
             httpGet:
               path: /healthz

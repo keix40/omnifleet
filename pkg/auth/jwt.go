@@ -16,13 +16,23 @@ type Claims struct {
 }
 
 type TokenIssuer struct {
-	secret []byte
-	ttl    time.Duration
-	issuer string
+	secret   []byte
+	ttl      time.Duration
+	issuer   string
+	audience string
 }
 
-func NewTokenIssuer(secret string, ttl time.Duration, issuer string) *TokenIssuer {
-	return &TokenIssuer{secret: []byte(secret), ttl: ttl, issuer: issuer}
+func NewTokenIssuer(secret string, ttl time.Duration, issuer, audience string) *TokenIssuer {
+	return &TokenIssuer{
+		secret:   []byte(secret),
+		ttl:      ttl,
+		issuer:   issuer,
+		audience: audience,
+	}
+}
+
+func NewTokenIssuerFromSettings(settings JWTSettings, ttl time.Duration) *TokenIssuer {
+	return NewTokenIssuer(string(settings.Secret), ttl, settings.Issuer, settings.Audience)
 }
 
 func (t *TokenIssuer) Issue(userID, tenantID, email string, role Role) (string, time.Time, error) {
@@ -36,6 +46,7 @@ func (t *TokenIssuer) Issue(userID, tenantID, email string, role Role) (string, 
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    t.issuer,
+			Audience:  jwt.ClaimStrings{t.audience},
 			Subject:   userID,
 		},
 	}
@@ -50,7 +61,7 @@ func (t *TokenIssuer) Parse(tokenString string) (*Claims, error) {
 			return nil, fmt.Errorf("unexpected signing method")
 		}
 		return t.secret, nil
-	})
+	}, jwt.WithIssuer(t.issuer), jwt.WithAudience(t.audience))
 	if err != nil {
 		return nil, err
 	}

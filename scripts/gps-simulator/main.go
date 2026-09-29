@@ -15,9 +15,10 @@ func main() {
 	gateway := env("GATEWAY_URL", "http://localhost:8080")
 	email := env("DRIVER_EMAIL", "driver@acme.test")
 	password := env("DRIVER_PASSWORD", "demo-password-change-me")
+	tenantSlug := env("TENANT_SLUG", "acme-logistics")
 	vehicleID := env("VEHICLE_ID", "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
 
-	token := login(gateway, email, password)
+	token := login(gateway, email, password, tenantSlug)
 	fmt.Printf("simulating GPS for vehicle %s via %s\n", vehicleID, gateway)
 
 	// Path through Acme SF depot geofence (enter/exit demo).
@@ -34,8 +35,12 @@ func main() {
 	}
 }
 
-func login(base, email, password string) string {
-	body, _ := json.Marshal(map[string]string{"email": email, "password": password})
+func login(base, email, password, tenantSlug string) string {
+	body, _ := json.Marshal(map[string]string{
+		"email":       email,
+		"password":    password,
+		"tenant_slug": tenantSlug,
+	})
 	resp, err := http.Post(base+"/api/v1/auth/login", "application/json", bytes.NewReader(body))
 	if err != nil {
 		panic(err)

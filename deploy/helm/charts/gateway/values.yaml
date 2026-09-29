@@ -2,6 +2,17 @@ replicaCount: 2
 image:
   repository: ghcr.io/keix40/omnifleet/gateway
   tag: latest
+jwt:
+  issuer: omnifleet
+  audience: omnifleet-api
+secrets:
+  create: false
+  existingSecret: ""
+  jwtSecret: ""
+  databaseUrl: ""
+  natsUrl: nats://nats:4222
+  authGrpcAddr: auth:50051
+  trackingGrpcAddr: tracking:50052
 autoscaling:
   enabled: true
   minReplicas: 2

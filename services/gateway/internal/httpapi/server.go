@@ -3,9 +3,10 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -13,10 +14,12 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	authv1 "github.com/keix40/omnifleet/gen/go/auth/v1"
-	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	commonv1 "github.com/keix40/omnifleet/gen/go/common/v1"
+	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	"github.com/keix40/omnifleet/pkg/auth"
 	"github.com/keix40/omnifleet/pkg/events"
+	"github.com/keix40/omnifleet/pkg/validate"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/grpc"
@@ -27,7 +30,9 @@ type Config struct {
 	AuthAddr     string
 	TrackingAddr string
 	NatsURL      string
-	JWTSecret    string
+	DatabaseURL  string
+	JWT          auth.JWTSettings
+	ReplicaID    string
 }
 
 const wsTicketSubprotocolPrefix = "omnifleet.v1."
@@ -39,6 +44,9 @@ type Server struct {
 	wsTickets      *auth.WSTicketStore
 	hub            *wsHub
 	nc             *nats.Conn
+	loginLimiter   *auth.LoginRateLimiter
+	dbPool         *pgxpool.Pool
+	replicaID      string
 }
 
 func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
@@ -64,17 +72,45 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		authConn.Close()
 		return nil, func() {}, err
 	}
+
+	var dbPool *pgxpool.Pool
+	var ticketStore auth.SingleUseStore
+	if cfg.DatabaseURL != "" {
+		dbPool, err = pgxpool.New(ctx, cfg.DatabaseURL)
+		if err != nil {
+			nc.Close()
+			trackConn.Close()
+			authConn.Close()
+			return nil, func() {}, err
+		}
+		ticketStore = auth.NewPostgresSingleUseStore(dbPool)
+	}
+
+	replicaID := cfg.ReplicaID
+	if replicaID == "" {
+		replicaID = os.Getenv("HOSTNAME")
+	}
+	if replicaID == "" {
+		replicaID = fmt.Sprintf("gateway-%d", time.Now().UnixNano())
+	}
+
 	hub := newHub()
 	s := &Server{
 		authClient:     authv1.NewAuthServiceClient(authConn),
 		trackingClient: trackingv1.NewTrackingServiceClient(trackConn),
-		tokens:         auth.NewTokenIssuer(cfg.JWTSecret, 24*time.Hour, "omnifleet-gateway"),
-		wsTickets:      auth.NewWSTicketStore(30 * time.Second),
+		tokens:         auth.NewTokenIssuerFromSettings(cfg.JWT, 24*time.Hour),
+		wsTickets:      auth.NewWSTicketStore(cfg.JWT.Secret, 30*time.Second, ticketStore),
 		hub:            hub,
 		nc:             nc,
+		loginLimiter:   auth.NewLoginRateLimiter(30, time.Minute),
+		dbPool:         dbPool,
+		replicaID:      replicaID,
 	}
 	go s.bridgeNATS(ctx, js)
 	cleanup := func() {
+		if dbPool != nil {
+			dbPool.Close()
+		}
 		nc.Close()
 		trackConn.Close()
 		authConn.Close()
@@ -96,10 +132,7 @@ func (s *Server) Router() http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
-	r.Get("/readyz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ready"))
-	})
+	r.Get("/readyz", s.handleReadyz)
 
 	r.Post("/api/v1/auth/login", s.handleLogin)
 	r.Group(func(protected chi.Router) {
@@ -114,19 +147,33 @@ func (s *Server) Router() http.Handler {
 }
 
 type loginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	TenantSlug string `json:"tenant_slug"`
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	ip := r.Header.Get("X-Real-IP")
+	if ip == "" {
+		ip = strings.Split(r.RemoteAddr, ":")[0]
+	}
+	if !s.loginLimiter.Allow("ip:" + ip) {
+		http.Error(w, "too many requests", http.StatusTooManyRequests)
+		return
+	}
 	var body loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
+	if strings.TrimSpace(body.TenantSlug) == "" {
+		http.Error(w, "tenant_slug required", http.StatusBadRequest)
+		return
+	}
 	resp, err := s.authClient.Login(r.Context(), &authv1.LoginRequest{
-		Email:    body.Email,
-		Password: body.Password,
+		Email:      body.Email,
+		Password:   body.Password,
+		TenantSlug: body.TenantSlug,
 	})
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -154,6 +201,10 @@ func (s *Server) handleIngestPosition(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
+	if err := validate.IngestPosition(body.VehicleID, body.Latitude, body.Longitude); err != nil {
+		http.Error(w, validate.PublicMessage(err), http.StatusBadRequest)
+		return
+	}
 	resp, err := s.trackingClient.IngestPosition(r.Context(), &trackingv1.IngestPositionRequest{
 		TenantId:  claims.TenantID,
 		VehicleId: body.VehicleID,
@@ -167,10 +218,35 @@ func (s *Server) handleIngestPosition(w http.ResponseWriter, r *http.Request) {
 		RecordedAtUnix: time.Now().Unix(),
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		http.Error(w, validate.PublicMessage(validate.WrapInternal(err)), http.StatusBadGateway)
 		return
 	}
 	writeJSON(w, resp)
+}
+
+func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	if s.nc == nil || !s.nc.IsConnected() {
+		http.Error(w, "nats unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if _, err := s.authClient.Health(ctx, &authv1.HealthRequest{}); err != nil {
+		http.Error(w, "auth unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if _, err := s.trackingClient.Health(ctx, &trackingv1.HealthRequest{}); err != nil {
+		http.Error(w, "tracking unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if s.dbPool != nil {
+		if err := s.dbPool.Ping(ctx); err != nil {
+			http.Error(w, "database unavailable", http.StatusServiceUnavailable)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ready"))
 }
 
 var upgrader = websocket.Upgrader{
@@ -234,9 +310,9 @@ func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request, claims *
 	if err != nil {
 		return
 	}
-	s.hub.register(claims.TenantID, conn)
+	client := s.hub.register(claims.TenantID, conn)
 	defer func() {
-		s.hub.unregister(claims.TenantID, conn)
+		s.hub.unregister(claims.TenantID, client)
 		_ = conn.Close()
 	}()
 	for {
@@ -252,7 +328,7 @@ func (s *Server) bridgeNATS(ctx context.Context, js jetstream.JetStream) {
 		Subjects: []string{"fleet.>"},
 	})
 	cons, err := js.CreateOrUpdateConsumer(ctx, events.StreamFleet, jetstream.ConsumerConfig{
-		Durable:       "gateway-live",
+		Name:          fmt.Sprintf("gateway-live-%s", s.replicaID),
 		FilterSubject: "fleet.>",
 		AckPolicy:     jetstream.AckExplicitPolicy,
 	})
@@ -276,38 +352,4 @@ func (s *Server) bridgeNATS(ctx context.Context, js jetstream.JetStream) {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
-}
-
-type wsHub struct {
-	mu    sync.RWMutex
-	conns map[string]map[*websocket.Conn]struct{}
-}
-
-func newHub() *wsHub {
-	return &wsHub{conns: make(map[string]map[*websocket.Conn]struct{})}
-}
-
-func (h *wsHub) register(tenantID string, c *websocket.Conn) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.conns[tenantID] == nil {
-		h.conns[tenantID] = make(map[*websocket.Conn]struct{})
-	}
-	h.conns[tenantID][c] = struct{}{}
-}
-
-func (h *wsHub) unregister(tenantID string, c *websocket.Conn) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if m := h.conns[tenantID]; m != nil {
-		delete(m, c)
-	}
-}
-
-func (h *wsHub) broadcast(tenantID string, payload []byte) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-	for c := range h.conns[tenantID] {
-		_ = c.WriteMessage(websocket.TextMessage, payload)
-	}
 }

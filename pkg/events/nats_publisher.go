@@ -45,6 +45,11 @@ func (p *Publisher) PublishPosition(ctx context.Context, ev PositionEvent) error
 	return err
 }
 
+func (p *Publisher) PublishRaw(ctx context.Context, subject string, data []byte) error {
+	_, err := p.js.Publish(ctx, subject, data)
+	return err
+}
+
 func (p *Publisher) PublishAlert(ctx context.Context, ev AlertEvent) error {
 	data, err := json.Marshal(ev)
 	if err != nil {

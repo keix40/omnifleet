@@ -130,7 +130,6 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 	defer s.evalMu.Unlock()
 
 	var out []geofenceEval
-	var pendingAlerts []events.AlertEvent
 	err := db.WithTenant(ctx, s.pool, tenantID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT g.id::text, g.name,
@@ -187,14 +186,16 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 				if err != nil {
 					return err
 				}
-				pendingAlerts = append(pendingAlerts, events.AlertEvent{
+				if err := events.EnqueueAlert(ctx, tx, events.AlertEvent{
 					TenantID:     tenantID,
 					VehicleID:    vehicleID,
 					GeofenceID:   g.id,
 					GeofenceName: g.name,
 					EventType:    eventType,
 					Message:      fmt.Sprintf("Vehicle %s %s geofence %s", vehicleID, eventType, g.name),
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
@@ -202,12 +203,24 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 	if err != nil {
 		return nil, err
 	}
-	for _, alert := range pendingAlerts {
-		if err := s.publisher.PublishAlert(ctx, alert); err != nil {
-			return out, fmt.Errorf("publish alert: %w", err)
+	return out, nil
+}
+
+// RunOutboxRelay publishes committed geofence alerts from the transactional outbox.
+func (s *Server) RunOutboxRelay(ctx context.Context) {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_, err := events.RelayPending(ctx, s.pool, s.publisher, 32)
+			if err != nil {
+				log.Printf("outbox relay: %v", err)
+			}
 		}
 	}
-	return out, nil
 }
 
 func (s *Server) Health(ctx context.Context, _ *geofencingv1.HealthRequest) (*geofencingv1.HealthResponse, error) {

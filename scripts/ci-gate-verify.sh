@@ -19,12 +19,18 @@ for f in "${CHANGED[@]}"; do
     pkg/*|gen/*|proto/*|services/*|db/*|go.work|scripts/bootstrap-db.sh|.github/workflows/go-services.yml)
       needs_go=1
       ;;
+  esac
+  case "$f" in
     web/dashboard/*|.github/workflows/web-dashboard.yml)
       needs_web=1
       ;;
+  esac
+  case "$f" in
     deploy/terraform/*|deploy/helm/*|.github/workflows/infra.yml)
       needs_infra=1
       ;;
+  esac
+  case "$f" in
     pkg/*|services/*|db/*|docker-compose.yml|tests/e2e/*|scripts/*|.github/workflows/e2e-compose.yml)
       needs_e2e=1
       ;;

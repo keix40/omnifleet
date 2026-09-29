@@ -9,15 +9,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/keix40/omnifleet/pkg/auth"
 	"github.com/keix40/omnifleet/services/gateway/internal/httpapi"
 )
 
 func main() {
+	jwtSettings, err := auth.LoadJWTSettingsFromEnv()
+	if err != nil {
+		log.Fatalf("jwt config: %v", err)
+	}
+
 	addr := env("GATEWAY_HTTP_ADDR", "0.0.0.0:8080")
 	authAddr := env("AUTH_GRPC_ADDR", "localhost:50051")
 	trackingAddr := env("TRACKING_GRPC_ADDR", "localhost:50052")
 	natsURL := env("NATS_URL", "nats://localhost:4222")
-	jwtSecret := env("JWT_SECRET", "dev-only-change-me")
+	databaseURL := env("DATABASE_URL", "")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -26,7 +32,9 @@ func main() {
 		AuthAddr:     authAddr,
 		TrackingAddr: trackingAddr,
 		NatsURL:      natsURL,
-		JWTSecret:    jwtSecret,
+		DatabaseURL:  databaseURL,
+		JWT:          jwtSettings,
+		ReplicaID:    os.Getenv("GATEWAY_REPLICA_ID"),
 	})
 	if err != nil {
 		log.Fatalf("gateway: %v", err)
