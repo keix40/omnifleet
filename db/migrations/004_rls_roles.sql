@@ -32,14 +32,26 @@ $$;
 
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        RETURN;
+    END IF;
+    BEGIN
+        EXECUTE format('GRANT omnifleet_owner TO %I', CURRENT_USER);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE NOTICE 'omnifleet: could not grant omnifleet_owner to migration user';
+    END;
+    BEGIN
         ALTER TABLE tenants OWNER TO omnifleet_owner;
         ALTER TABLE users OWNER TO omnifleet_owner;
         ALTER TABLE vehicles OWNER TO omnifleet_owner;
         ALTER TABLE geofences OWNER TO omnifleet_owner;
         ALTER TABLE vehicle_geofence_state OWNER TO omnifleet_owner;
         ALTER TABLE gps_positions OWNER TO omnifleet_owner;
-    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE NOTICE 'omnifleet: table ownership transfer to omnifleet_owner skipped (%)', SQLERRM;
+    END;
 END
 $$;
 

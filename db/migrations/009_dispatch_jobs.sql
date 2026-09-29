@@ -39,8 +39,21 @@ CREATE POLICY tenant_isolation_dispatch_jobs ON dispatch_jobs
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
-ALTER TABLE dispatch_jobs OWNER TO omnifleet_owner;
 ALTER TABLE dispatch_jobs FORCE ROW LEVEL SECURITY;
 
-GRANT USAGE ON TYPE job_status TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON dispatch_jobs TO omnifleet_app;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        BEGIN
+            ALTER TABLE dispatch_jobs OWNER TO omnifleet_owner;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'omnifleet: dispatch_jobs owner transfer skipped (%)', SQLERRM;
+        END;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        GRANT USAGE ON TYPE job_status TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON dispatch_jobs TO omnifleet_app;
+    END IF;
+END
+$$;

@@ -29,8 +29,13 @@ BEGIN
         GRANT SELECT ON tenants TO omnifleet_app;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
-        ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
-        ALTER TABLE tenants OWNER TO omnifleet_owner;
+        BEGIN
+            ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
+            ALTER TABLE tenants OWNER TO omnifleet_owner;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'omnifleet: owner transfer skipped for auth_lookup_user/tenants (%)', SQLERRM;
+        END;
     END IF;
 END
 $$;

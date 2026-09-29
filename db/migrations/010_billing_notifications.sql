@@ -91,24 +91,37 @@ CREATE POLICY tenant_isolation_notification_preferences ON notification_preferen
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
-ALTER TABLE billing_plans OWNER TO omnifleet_owner;
-ALTER TABLE billing_subscriptions OWNER TO omnifleet_owner;
-ALTER TABLE billing_usage_snapshots OWNER TO omnifleet_owner;
-ALTER TABLE stripe_webhook_events OWNER TO omnifleet_owner;
-ALTER TABLE notification_preferences OWNER TO omnifleet_owner;
-ALTER TABLE notification_deliveries OWNER TO omnifleet_owner;
-ALTER TABLE notification_dlq OWNER TO omnifleet_owner;
-
 ALTER TABLE billing_subscriptions FORCE ROW LEVEL SECURITY;
 ALTER TABLE billing_usage_snapshots FORCE ROW LEVEL SECURITY;
 ALTER TABLE notification_preferences FORCE ROW LEVEL SECURITY;
-GRANT SELECT ON billing_plans TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON billing_subscriptions TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON billing_usage_snapshots TO omnifleet_app;
-GRANT SELECT, INSERT ON stripe_webhook_events TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_preferences TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_deliveries TO omnifleet_app;
-GRANT SELECT, INSERT ON notification_dlq TO omnifleet_app;
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        BEGIN
+            ALTER TABLE billing_plans OWNER TO omnifleet_owner;
+            ALTER TABLE billing_subscriptions OWNER TO omnifleet_owner;
+            ALTER TABLE billing_usage_snapshots OWNER TO omnifleet_owner;
+            ALTER TABLE stripe_webhook_events OWNER TO omnifleet_owner;
+            ALTER TABLE notification_preferences OWNER TO omnifleet_owner;
+            ALTER TABLE notification_deliveries OWNER TO omnifleet_owner;
+            ALTER TABLE notification_dlq OWNER TO omnifleet_owner;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'omnifleet: billing/notifications owner transfer skipped (%)', SQLERRM;
+        END;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        GRANT SELECT ON billing_plans TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON billing_subscriptions TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON billing_usage_snapshots TO omnifleet_app;
+        GRANT SELECT, INSERT ON stripe_webhook_events TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON notification_preferences TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON notification_deliveries TO omnifleet_app;
+        GRANT SELECT, INSERT ON notification_dlq TO omnifleet_app;
+    END IF;
+END
+$$;
 
 -- Default subscriptions for demo tenants.
 INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
