@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	geofencingv1 "github.com/keix40/omnifleet/gen/go/geofencing/v1"
 	"github.com/keix40/omnifleet/pkg/db"
@@ -62,13 +63,17 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 	}
 	cons, err := s.js.CreateOrUpdateConsumer(ctx, events.StreamFleet, jetstream.ConsumerConfig{
 		Durable:       "geofencing-positions",
-		FilterSubject: "fleet.*.positions",
+		FilterSubject: "fleet.>",
 		AckPolicy:     jetstream.AckExplicitPolicy,
 	})
 	if err != nil {
 		return err
 	}
 	_, err = cons.Consume(func(msg jetstream.Msg) {
+		if !strings.HasSuffix(msg.Subject(), ".positions") {
+			_ = msg.Ack()
+			return
+		}
 		var ev events.PositionEvent
 		if err := json.Unmarshal(msg.Data(), &ev); err != nil {
 			_ = msg.Term()
@@ -111,7 +116,7 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 	err := db.WithTenant(ctx, s.pool, tenantID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT g.id::text, g.name,
-			       ST_Covers(g.boundary, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS inside
+			       ST_Intersects(g.boundary, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS inside
 			FROM geofences g
 		`, lon, lat)
 		if err != nil {
