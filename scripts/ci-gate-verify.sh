@@ -13,11 +13,17 @@ needs_go=0
 needs_web=0
 needs_infra=0
 needs_e2e=0
+needs_smoke=0
 
 for f in "${CHANGED[@]}"; do
   case "$f" in
-    pkg/*|gen/*|proto/*|services/*|db/*|go.work|scripts/bootstrap-db.sh|.github/workflows/go-services.yml)
+    pkg/*|gen/*|proto/*|services/*|db/*|go.work|cmd/omnifleet-all/*|scripts/bootstrap-db.sh|scripts/bootstrap-neon.sh|.github/workflows/go-services.yml)
       needs_go=1
+      ;;
+  esac
+  case "$f" in
+    cmd/omnifleet-all/*|services/*|pkg/*|db/*|scripts/bootstrap-db.sh|scripts/bootstrap-neon.sh|.github/workflows/smoke-allinone.yml)
+      needs_smoke=1
       ;;
   esac
   case "$f" in
@@ -26,7 +32,12 @@ for f in "${CHANGED[@]}"; do
       ;;
   esac
   case "$f" in
-    deploy/terraform/*|deploy/helm/*|.github/workflows/infra.yml)
+    mobile/driver/*|.github/workflows/mobile-driver.yml)
+      needs_web=1
+      ;;
+  esac
+  case "$f" in
+    deploy/terraform/*|deploy/helm/*|Dockerfile.render|render.yaml|.github/workflows/infra.yml)
       needs_infra=1
       ;;
   esac
@@ -38,9 +49,9 @@ for f in "${CHANGED[@]}"; do
 done
 
 echo "Changed files: ${#CHANGED[@]}"
-echo "Required workflows: go=$needs_go web=$needs_web infra=$needs_infra e2e=$needs_e2e"
+echo "Required workflows: go=$needs_go web=$needs_web infra=$needs_infra e2e=$needs_e2e smoke=$needs_smoke"
 
-if (( needs_go == 0 && needs_web == 0 && needs_infra == 0 && needs_e2e == 0 )); then
+if (( needs_go == 0 && needs_web == 0 && needs_infra == 0 && needs_e2e == 0 && needs_smoke == 0 )); then
   echo "No path-filtered workflows apply to this diff; gate passes."
   exit 0
 fi
@@ -78,5 +89,6 @@ wait_for_workflow() {
 (( needs_web == 1 )) && wait_for_workflow "web-dashboard.yml" "Web Dashboard"
 (( needs_infra == 1 )) && wait_for_workflow "infra.yml" "Infrastructure"
 (( needs_e2e == 1 )) && wait_for_workflow "e2e-compose.yml" "E2E Compose Slice"
+(( needs_smoke == 1 )) && wait_for_workflow "smoke-allinone.yml" "Smoke All-in-One"
 
 echo "All required workflows passed."

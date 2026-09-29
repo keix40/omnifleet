@@ -9,7 +9,9 @@ on:
       - "services/**"
       - "db/**"
       - "go.work"
+      - "cmd/omnifleet-all/**"
       - "scripts/bootstrap-db.sh"
+      - "scripts/bootstrap-neon.sh"
       - ".github/workflows/go-services.yml"
   push:
     branches: [main]
@@ -20,7 +22,9 @@ on:
       - "services/**"
       - "db/**"
       - "go.work"
+      - "cmd/omnifleet-all/**"
       - "scripts/bootstrap-db.sh"
+      - "scripts/bootstrap-neon.sh"
 
 jobs:
   test:
@@ -73,8 +77,13 @@ jobs:
           cd services/auth && go test ./...
           cd ../tracking && go test ./...
           cd ../gateway && go test ./...
+          cd ../eta && go test ./...
+          cd ../dispatch && go test ./...
+          cd ../billing && go test ./...
+          cd ../notifications && go test ./...
       - name: Build services
         run: |
           for svc in auth gateway tracking geofencing eta dispatch billing notifications; do
             (cd services/$svc && go build ./...)
           done
+          (cd cmd/omnifleet-all && go build ./...)

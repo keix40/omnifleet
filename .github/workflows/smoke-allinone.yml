@@ -1,0 +1,84 @@
+name: Smoke All-in-One
+
+on:
+  pull_request:
+    paths:
+      - "cmd/omnifleet-all/**"
+      - "services/**"
+      - "pkg/**"
+      - "db/**"
+      - "scripts/bootstrap-db.sh"
+      - "scripts/bootstrap-neon.sh"
+      - ".github/workflows/smoke-allinone.yml"
+  push:
+    branches: [main]
+    paths:
+      - "cmd/omnifleet-all/**"
+      - "services/**"
+      - "pkg/**"
+      - "db/**"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: omnifleet
+          POSTGRES_PASSWORD: omnifleet
+          POSTGRES_DB: omnifleet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U omnifleet -d omnifleet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start NATS JetStream
+        run: docker run -d --name nats-smoke -p 4222:4222 nats:2.10-alpine -js
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Bootstrap database
+        env:
+          PGPASSWORD: omnifleet
+          PGHOST: localhost
+          PGUSER: omnifleet
+          PGDATABASE: omnifleet
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          chmod +x scripts/bootstrap-db.sh
+          ./scripts/bootstrap-db.sh
+      - name: Start omnifleet-all
+        env:
+          DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
+          NATS_URL: nats://localhost:4222
+          OMNIFLEET_SHARED_NATS: "1"
+          OMNIFLEET_DEV_MODE: "1"
+          JWT_SECRET: smoke-test-secret-minimum-32-chars-long
+          PORT: "18080"
+        run: |
+          cd cmd/omnifleet-all
+          go run . &
+          echo $! > /tmp/omnifleet-all.pid
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:18080/healthz && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: Smoke test
+        env:
+          SMOKE_TEST: "1"
+          SMOKE_GATEWAY_URL: http://127.0.0.1:18080
+          SMOKE_WS_URL: ws://127.0.0.1:18080
+        run: |
+          cd cmd/omnifleet-all
+          go test -tags smoke -count=1 -timeout 2m .
+      - name: Stop process
+        if: always()
+        run: |
+          kill "$(cat /tmp/omnifleet-all.pid)" 2>/dev/null || true
+          docker rm -f nats-smoke 2>/dev/null || true

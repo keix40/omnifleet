@@ -19,16 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BillingService_Health_FullMethodName = "/billing.v1.BillingService/Health"
+	BillingService_Health_FullMethodName              = "/billing.v1.BillingService/Health"
+	BillingService_GetSubscription_FullMethodName     = "/billing.v1.BillingService/GetSubscription"
+	BillingService_GetUsage_FullMethodName            = "/billing.v1.BillingService/GetUsage"
+	BillingService_RecordUsageSnapshot_FullMethodName = "/billing.v1.BillingService/RecordUsageSnapshot"
+	BillingService_HandleStripeWebhook_FullMethodName = "/billing.v1.BillingService/HandleStripeWebhook"
 )
 
 // BillingServiceClient is the client API for BillingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// TODO: Stripe subscriptions, webhook ingestion, plan enforcement.
 type BillingServiceClient interface {
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	GetSubscription(ctx context.Context, in *GetSubscriptionRequest, opts ...grpc.CallOption) (*GetSubscriptionResponse, error)
+	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
+	RecordUsageSnapshot(ctx context.Context, in *RecordUsageSnapshotRequest, opts ...grpc.CallOption) (*RecordUsageSnapshotResponse, error)
+	HandleStripeWebhook(ctx context.Context, in *HandleStripeWebhookRequest, opts ...grpc.CallOption) (*HandleStripeWebhookResponse, error)
 }
 
 type billingServiceClient struct {
@@ -49,13 +55,55 @@ func (c *billingServiceClient) Health(ctx context.Context, in *HealthRequest, op
 	return out, nil
 }
 
+func (c *billingServiceClient) GetSubscription(ctx context.Context, in *GetSubscriptionRequest, opts ...grpc.CallOption) (*GetSubscriptionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSubscriptionResponse)
+	err := c.cc.Invoke(ctx, BillingService_GetSubscription_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsageResponse)
+	err := c.cc.Invoke(ctx, BillingService_GetUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) RecordUsageSnapshot(ctx context.Context, in *RecordUsageSnapshotRequest, opts ...grpc.CallOption) (*RecordUsageSnapshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordUsageSnapshotResponse)
+	err := c.cc.Invoke(ctx, BillingService_RecordUsageSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) HandleStripeWebhook(ctx context.Context, in *HandleStripeWebhookRequest, opts ...grpc.CallOption) (*HandleStripeWebhookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HandleStripeWebhookResponse)
+	err := c.cc.Invoke(ctx, BillingService_HandleStripeWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility.
-//
-// TODO: Stripe subscriptions, webhook ingestion, plan enforcement.
 type BillingServiceServer interface {
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
+	GetSubscription(context.Context, *GetSubscriptionRequest) (*GetSubscriptionResponse, error)
+	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
+	RecordUsageSnapshot(context.Context, *RecordUsageSnapshotRequest) (*RecordUsageSnapshotResponse, error)
+	HandleStripeWebhook(context.Context, *HandleStripeWebhookRequest) (*HandleStripeWebhookResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -68,6 +116,18 @@ type UnimplementedBillingServiceServer struct{}
 
 func (UnimplementedBillingServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
+}
+func (UnimplementedBillingServiceServer) GetSubscription(context.Context, *GetSubscriptionRequest) (*GetSubscriptionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSubscription not implemented")
+}
+func (UnimplementedBillingServiceServer) GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUsage not implemented")
+}
+func (UnimplementedBillingServiceServer) RecordUsageSnapshot(context.Context, *RecordUsageSnapshotRequest) (*RecordUsageSnapshotResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordUsageSnapshot not implemented")
+}
+func (UnimplementedBillingServiceServer) HandleStripeWebhook(context.Context, *HandleStripeWebhookRequest) (*HandleStripeWebhookResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleStripeWebhook not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 func (UnimplementedBillingServiceServer) testEmbeddedByValue()                        {}
@@ -108,6 +168,78 @@ func _BillingService_Health_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_GetSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetSubscription_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetSubscription(ctx, req.(*GetSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetUsage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetUsage(ctx, req.(*GetUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_RecordUsageSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordUsageSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).RecordUsageSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_RecordUsageSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).RecordUsageSnapshot(ctx, req.(*RecordUsageSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_HandleStripeWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleStripeWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).HandleStripeWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_HandleStripeWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).HandleStripeWebhook(ctx, req.(*HandleStripeWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +250,22 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Health",
 			Handler:    _BillingService_Health_Handler,
+		},
+		{
+			MethodName: "GetSubscription",
+			Handler:    _BillingService_GetSubscription_Handler,
+		},
+		{
+			MethodName: "GetUsage",
+			Handler:    _BillingService_GetUsage_Handler,
+		},
+		{
+			MethodName: "RecordUsageSnapshot",
+			Handler:    _BillingService_RecordUsageSnapshot_Handler,
+		},
+		{
+			MethodName: "HandleStripeWebhook",
+			Handler:    _BillingService_HandleStripeWebhook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

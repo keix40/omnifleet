@@ -60,6 +60,7 @@ func (*HealthRequest) Descriptor() ([]byte, []int) {
 type HealthResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Provider      string                 `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,17 +102,488 @@ func (x *HealthResponse) GetStatus() string {
 	return ""
 }
 
+func (x *HealthResponse) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+type GetSubscriptionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSubscriptionRequest) Reset() {
+	*x = GetSubscriptionRequest{}
+	mi := &file_billing_v1_billing_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSubscriptionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSubscriptionRequest) ProtoMessage() {}
+
+func (x *GetSubscriptionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSubscriptionRequest.ProtoReflect.Descriptor instead.
+func (*GetSubscriptionRequest) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetSubscriptionRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+type GetSubscriptionResponse struct {
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	PlanId                   string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	PlanName                 string                 `protobuf:"bytes,2,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
+	Status                   string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	VehicleLimit             int32                  `protobuf:"varint,4,opt,name=vehicle_limit,json=vehicleLimit,proto3" json:"vehicle_limit,omitempty"`
+	PositionsIncludedMonthly int64                  `protobuf:"varint,5,opt,name=positions_included_monthly,json=positionsIncludedMonthly,proto3" json:"positions_included_monthly,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *GetSubscriptionResponse) Reset() {
+	*x = GetSubscriptionResponse{}
+	mi := &file_billing_v1_billing_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSubscriptionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSubscriptionResponse) ProtoMessage() {}
+
+func (x *GetSubscriptionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSubscriptionResponse.ProtoReflect.Descriptor instead.
+func (*GetSubscriptionResponse) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetSubscriptionResponse) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *GetSubscriptionResponse) GetPlanName() string {
+	if x != nil {
+		return x.PlanName
+	}
+	return ""
+}
+
+func (x *GetSubscriptionResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *GetSubscriptionResponse) GetVehicleLimit() int32 {
+	if x != nil {
+		return x.VehicleLimit
+	}
+	return 0
+}
+
+func (x *GetSubscriptionResponse) GetPositionsIncludedMonthly() int64 {
+	if x != nil {
+		return x.PositionsIncludedMonthly
+	}
+	return 0
+}
+
+type GetUsageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUsageRequest) Reset() {
+	*x = GetUsageRequest{}
+	mi := &file_billing_v1_billing_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUsageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsageRequest) ProtoMessage() {}
+
+func (x *GetUsageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsageRequest.ProtoReflect.Descriptor instead.
+func (*GetUsageRequest) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetUsageRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+type GetUsageResponse struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	VehicleCount        int32                  `protobuf:"varint,1,opt,name=vehicle_count,json=vehicleCount,proto3" json:"vehicle_count,omitempty"`
+	PositionCountPeriod int64                  `protobuf:"varint,2,opt,name=position_count_period,json=positionCountPeriod,proto3" json:"position_count_period,omitempty"`
+	PeriodStart         string                 `protobuf:"bytes,3,opt,name=period_start,json=periodStart,proto3" json:"period_start,omitempty"`
+	PeriodEnd           string                 `protobuf:"bytes,4,opt,name=period_end,json=periodEnd,proto3" json:"period_end,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *GetUsageResponse) Reset() {
+	*x = GetUsageResponse{}
+	mi := &file_billing_v1_billing_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUsageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsageResponse) ProtoMessage() {}
+
+func (x *GetUsageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsageResponse.ProtoReflect.Descriptor instead.
+func (*GetUsageResponse) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetUsageResponse) GetVehicleCount() int32 {
+	if x != nil {
+		return x.VehicleCount
+	}
+	return 0
+}
+
+func (x *GetUsageResponse) GetPositionCountPeriod() int64 {
+	if x != nil {
+		return x.PositionCountPeriod
+	}
+	return 0
+}
+
+func (x *GetUsageResponse) GetPeriodStart() string {
+	if x != nil {
+		return x.PeriodStart
+	}
+	return ""
+}
+
+func (x *GetUsageResponse) GetPeriodEnd() string {
+	if x != nil {
+		return x.PeriodEnd
+	}
+	return ""
+}
+
+type RecordUsageSnapshotRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordUsageSnapshotRequest) Reset() {
+	*x = RecordUsageSnapshotRequest{}
+	mi := &file_billing_v1_billing_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordUsageSnapshotRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordUsageSnapshotRequest) ProtoMessage() {}
+
+func (x *RecordUsageSnapshotRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordUsageSnapshotRequest.ProtoReflect.Descriptor instead.
+func (*RecordUsageSnapshotRequest) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RecordUsageSnapshotRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+type RecordUsageSnapshotResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VehicleCount  int32                  `protobuf:"varint,1,opt,name=vehicle_count,json=vehicleCount,proto3" json:"vehicle_count,omitempty"`
+	PositionCount int64                  `protobuf:"varint,2,opt,name=position_count,json=positionCount,proto3" json:"position_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordUsageSnapshotResponse) Reset() {
+	*x = RecordUsageSnapshotResponse{}
+	mi := &file_billing_v1_billing_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordUsageSnapshotResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordUsageSnapshotResponse) ProtoMessage() {}
+
+func (x *RecordUsageSnapshotResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordUsageSnapshotResponse.ProtoReflect.Descriptor instead.
+func (*RecordUsageSnapshotResponse) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RecordUsageSnapshotResponse) GetVehicleCount() int32 {
+	if x != nil {
+		return x.VehicleCount
+	}
+	return 0
+}
+
+func (x *RecordUsageSnapshotResponse) GetPositionCount() int64 {
+	if x != nil {
+		return x.PositionCount
+	}
+	return 0
+}
+
+type HandleStripeWebhookRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Payload         []byte                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
+	StripeSignature string                 `protobuf:"bytes,2,opt,name=stripe_signature,json=stripeSignature,proto3" json:"stripe_signature,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *HandleStripeWebhookRequest) Reset() {
+	*x = HandleStripeWebhookRequest{}
+	mi := &file_billing_v1_billing_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleStripeWebhookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleStripeWebhookRequest) ProtoMessage() {}
+
+func (x *HandleStripeWebhookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleStripeWebhookRequest.ProtoReflect.Descriptor instead.
+func (*HandleStripeWebhookRequest) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *HandleStripeWebhookRequest) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *HandleStripeWebhookRequest) GetStripeSignature() string {
+	if x != nil {
+		return x.StripeSignature
+	}
+	return ""
+}
+
+type HandleStripeWebhookResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Accepted      bool                   `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandleStripeWebhookResponse) Reset() {
+	*x = HandleStripeWebhookResponse{}
+	mi := &file_billing_v1_billing_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleStripeWebhookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleStripeWebhookResponse) ProtoMessage() {}
+
+func (x *HandleStripeWebhookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleStripeWebhookResponse.ProtoReflect.Descriptor instead.
+func (*HandleStripeWebhookResponse) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *HandleStripeWebhookResponse) GetAccepted() bool {
+	if x != nil {
+		return x.Accepted
+	}
+	return false
+}
+
+func (x *HandleStripeWebhookResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_billing_v1_billing_proto protoreflect.FileDescriptor
 
 const file_billing_v1_billing_proto_rawDesc = "" +
 	"\n" +
 	"\x18billing/v1/billing.proto\x12\n" +
 	"billing.v1\"\x0f\n" +
-	"\rHealthRequest\"(\n" +
+	"\rHealthRequest\"D\n" +
 	"\x0eHealthResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2Q\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1a\n" +
+	"\bprovider\x18\x02 \x01(\tR\bprovider\"5\n" +
+	"\x16GetSubscriptionRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"\xca\x01\n" +
+	"\x17GetSubscriptionResponse\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_name\x18\x02 \x01(\tR\bplanName\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12#\n" +
+	"\rvehicle_limit\x18\x04 \x01(\x05R\fvehicleLimit\x12<\n" +
+	"\x1apositions_included_monthly\x18\x05 \x01(\x03R\x18positionsIncludedMonthly\".\n" +
+	"\x0fGetUsageRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"\xad\x01\n" +
+	"\x10GetUsageResponse\x12#\n" +
+	"\rvehicle_count\x18\x01 \x01(\x05R\fvehicleCount\x122\n" +
+	"\x15position_count_period\x18\x02 \x01(\x03R\x13positionCountPeriod\x12!\n" +
+	"\fperiod_start\x18\x03 \x01(\tR\vperiodStart\x12\x1d\n" +
+	"\n" +
+	"period_end\x18\x04 \x01(\tR\tperiodEnd\"9\n" +
+	"\x1aRecordUsageSnapshotRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"i\n" +
+	"\x1bRecordUsageSnapshotResponse\x12#\n" +
+	"\rvehicle_count\x18\x01 \x01(\x05R\fvehicleCount\x12%\n" +
+	"\x0eposition_count\x18\x02 \x01(\x03R\rpositionCount\"a\n" +
+	"\x1aHandleStripeWebhookRequest\x12\x18\n" +
+	"\apayload\x18\x01 \x01(\fR\apayload\x12)\n" +
+	"\x10stripe_signature\x18\x02 \x01(\tR\x0fstripeSignature\"S\n" +
+	"\x1bHandleStripeWebhookResponse\x12\x1a\n" +
+	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xc4\x03\n" +
 	"\x0eBillingService\x12?\n" +
-	"\x06Health\x12\x19.billing.v1.HealthRequest\x1a\x1a.billing.v1.HealthResponseB\xa0\x01\n" +
+	"\x06Health\x12\x19.billing.v1.HealthRequest\x1a\x1a.billing.v1.HealthResponse\x12Z\n" +
+	"\x0fGetSubscription\x12\".billing.v1.GetSubscriptionRequest\x1a#.billing.v1.GetSubscriptionResponse\x12E\n" +
+	"\bGetUsage\x12\x1b.billing.v1.GetUsageRequest\x1a\x1c.billing.v1.GetUsageResponse\x12f\n" +
+	"\x13RecordUsageSnapshot\x12&.billing.v1.RecordUsageSnapshotRequest\x1a'.billing.v1.RecordUsageSnapshotResponse\x12f\n" +
+	"\x13HandleStripeWebhook\x12&.billing.v1.HandleStripeWebhookRequest\x1a'.billing.v1.HandleStripeWebhookResponseB\xa0\x01\n" +
 	"\x0ecom.billing.v1B\fBillingProtoP\x01Z7github.com/keix40/omnifleet/gen/go/billing/v1;billingv1\xa2\x02\x03BXX\xaa\x02\n" +
 	"Billing.V1\xca\x02\n" +
 	"Billing\\V1\xe2\x02\x16Billing\\V1\\GPBMetadata\xea\x02\vBilling::V1b\x06proto3"
@@ -128,16 +600,32 @@ func file_billing_v1_billing_proto_rawDescGZIP() []byte {
 	return file_billing_v1_billing_proto_rawDescData
 }
 
-var file_billing_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_billing_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_billing_v1_billing_proto_goTypes = []any{
-	(*HealthRequest)(nil),  // 0: billing.v1.HealthRequest
-	(*HealthResponse)(nil), // 1: billing.v1.HealthResponse
+	(*HealthRequest)(nil),               // 0: billing.v1.HealthRequest
+	(*HealthResponse)(nil),              // 1: billing.v1.HealthResponse
+	(*GetSubscriptionRequest)(nil),      // 2: billing.v1.GetSubscriptionRequest
+	(*GetSubscriptionResponse)(nil),     // 3: billing.v1.GetSubscriptionResponse
+	(*GetUsageRequest)(nil),             // 4: billing.v1.GetUsageRequest
+	(*GetUsageResponse)(nil),            // 5: billing.v1.GetUsageResponse
+	(*RecordUsageSnapshotRequest)(nil),  // 6: billing.v1.RecordUsageSnapshotRequest
+	(*RecordUsageSnapshotResponse)(nil), // 7: billing.v1.RecordUsageSnapshotResponse
+	(*HandleStripeWebhookRequest)(nil),  // 8: billing.v1.HandleStripeWebhookRequest
+	(*HandleStripeWebhookResponse)(nil), // 9: billing.v1.HandleStripeWebhookResponse
 }
 var file_billing_v1_billing_proto_depIdxs = []int32{
 	0, // 0: billing.v1.BillingService.Health:input_type -> billing.v1.HealthRequest
-	1, // 1: billing.v1.BillingService.Health:output_type -> billing.v1.HealthResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: billing.v1.BillingService.GetSubscription:input_type -> billing.v1.GetSubscriptionRequest
+	4, // 2: billing.v1.BillingService.GetUsage:input_type -> billing.v1.GetUsageRequest
+	6, // 3: billing.v1.BillingService.RecordUsageSnapshot:input_type -> billing.v1.RecordUsageSnapshotRequest
+	8, // 4: billing.v1.BillingService.HandleStripeWebhook:input_type -> billing.v1.HandleStripeWebhookRequest
+	1, // 5: billing.v1.BillingService.Health:output_type -> billing.v1.HealthResponse
+	3, // 6: billing.v1.BillingService.GetSubscription:output_type -> billing.v1.GetSubscriptionResponse
+	5, // 7: billing.v1.BillingService.GetUsage:output_type -> billing.v1.GetUsageResponse
+	7, // 8: billing.v1.BillingService.RecordUsageSnapshot:output_type -> billing.v1.RecordUsageSnapshotResponse
+	9, // 9: billing.v1.BillingService.HandleStripeWebhook:output_type -> billing.v1.HandleStripeWebhookResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -154,7 +642,7 @@ func file_billing_v1_billing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_billing_v1_billing_proto_rawDesc), len(file_billing_v1_billing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

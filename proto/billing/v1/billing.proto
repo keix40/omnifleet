@@ -4,12 +4,58 @@ package billing.v1;
 
 option go_package = "github.com/keix40/omnifleet/gen/go/billing/v1;billingv1";
 
-// TODO: Stripe subscriptions, webhook ingestion, plan enforcement.
 service BillingService {
   rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetSubscription(GetSubscriptionRequest) returns (GetSubscriptionResponse);
+  rpc GetUsage(GetUsageRequest) returns (GetUsageResponse);
+  rpc RecordUsageSnapshot(RecordUsageSnapshotRequest) returns (RecordUsageSnapshotResponse);
+  rpc HandleStripeWebhook(HandleStripeWebhookRequest) returns (HandleStripeWebhookResponse);
 }
 
 message HealthRequest {}
 message HealthResponse {
   string status = 1;
+  string provider = 2;
+}
+
+message GetSubscriptionRequest {
+  string tenant_id = 1;
+}
+
+message GetSubscriptionResponse {
+  string plan_id = 1;
+  string plan_name = 2;
+  string status = 3;
+  int32 vehicle_limit = 4;
+  int64 positions_included_monthly = 5;
+}
+
+message GetUsageRequest {
+  string tenant_id = 1;
+}
+
+message GetUsageResponse {
+  int32 vehicle_count = 1;
+  int64 position_count_period = 2;
+  string period_start = 3;
+  string period_end = 4;
+}
+
+message RecordUsageSnapshotRequest {
+  string tenant_id = 1;
+}
+
+message RecordUsageSnapshotResponse {
+  int32 vehicle_count = 1;
+  int64 position_count = 2;
+}
+
+message HandleStripeWebhookRequest {
+  bytes payload = 1;
+  string stripe_signature = 2;
+}
+
+message HandleStripeWebhookResponse {
+  bool accepted = 1;
+  string message = 2;
 }

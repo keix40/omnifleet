@@ -58,10 +58,11 @@ func (*HealthRequest) Descriptor() ([]byte, []int) {
 }
 
 type HealthResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Status         string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	DefaultChannel string                 `protobuf:"bytes,2,opt,name=default_channel,json=defaultChannel,proto3" json:"default_channel,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *HealthResponse) Reset() {
@@ -101,16 +102,312 @@ func (x *HealthResponse) GetStatus() string {
 	return ""
 }
 
+func (x *HealthResponse) GetDefaultChannel() string {
+	if x != nil {
+		return x.DefaultChannel
+	}
+	return ""
+}
+
+type NotificationPreferences struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	TenantId        string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AlertsEnabled   bool                   `protobuf:"varint,2,opt,name=alerts_enabled,json=alertsEnabled,proto3" json:"alerts_enabled,omitempty"`
+	DispatchEnabled bool                   `protobuf:"varint,3,opt,name=dispatch_enabled,json=dispatchEnabled,proto3" json:"dispatch_enabled,omitempty"`
+	EtaEnabled      bool                   `protobuf:"varint,4,opt,name=eta_enabled,json=etaEnabled,proto3" json:"eta_enabled,omitempty"`
+	Channel         string                 `protobuf:"bytes,5,opt,name=channel,proto3" json:"channel,omitempty"`
+	WebhookUrl      string                 `protobuf:"bytes,6,opt,name=webhook_url,json=webhookUrl,proto3" json:"webhook_url,omitempty"`
+	EmailTo         string                 `protobuf:"bytes,7,opt,name=email_to,json=emailTo,proto3" json:"email_to,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *NotificationPreferences) Reset() {
+	*x = NotificationPreferences{}
+	mi := &file_notifications_v1_notifications_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotificationPreferences) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotificationPreferences) ProtoMessage() {}
+
+func (x *NotificationPreferences) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_v1_notifications_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotificationPreferences.ProtoReflect.Descriptor instead.
+func (*NotificationPreferences) Descriptor() ([]byte, []int) {
+	return file_notifications_v1_notifications_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *NotificationPreferences) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *NotificationPreferences) GetAlertsEnabled() bool {
+	if x != nil {
+		return x.AlertsEnabled
+	}
+	return false
+}
+
+func (x *NotificationPreferences) GetDispatchEnabled() bool {
+	if x != nil {
+		return x.DispatchEnabled
+	}
+	return false
+}
+
+func (x *NotificationPreferences) GetEtaEnabled() bool {
+	if x != nil {
+		return x.EtaEnabled
+	}
+	return false
+}
+
+func (x *NotificationPreferences) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *NotificationPreferences) GetWebhookUrl() string {
+	if x != nil {
+		return x.WebhookUrl
+	}
+	return ""
+}
+
+func (x *NotificationPreferences) GetEmailTo() string {
+	if x != nil {
+		return x.EmailTo
+	}
+	return ""
+}
+
+type GetPreferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPreferencesRequest) Reset() {
+	*x = GetPreferencesRequest{}
+	mi := &file_notifications_v1_notifications_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPreferencesRequest) ProtoMessage() {}
+
+func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_v1_notifications_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPreferencesRequest.ProtoReflect.Descriptor instead.
+func (*GetPreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_notifications_v1_notifications_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetPreferencesRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+type GetPreferencesResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preferences   *NotificationPreferences `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPreferencesResponse) Reset() {
+	*x = GetPreferencesResponse{}
+	mi := &file_notifications_v1_notifications_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPreferencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPreferencesResponse) ProtoMessage() {}
+
+func (x *GetPreferencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_v1_notifications_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPreferencesResponse.ProtoReflect.Descriptor instead.
+func (*GetPreferencesResponse) Descriptor() ([]byte, []int) {
+	return file_notifications_v1_notifications_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetPreferencesResponse) GetPreferences() *NotificationPreferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+type UpdatePreferencesRequest struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preferences   *NotificationPreferences `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdatePreferencesRequest) Reset() {
+	*x = UpdatePreferencesRequest{}
+	mi := &file_notifications_v1_notifications_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdatePreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdatePreferencesRequest) ProtoMessage() {}
+
+func (x *UpdatePreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_v1_notifications_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdatePreferencesRequest.ProtoReflect.Descriptor instead.
+func (*UpdatePreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_notifications_v1_notifications_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdatePreferencesRequest) GetPreferences() *NotificationPreferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+type UpdatePreferencesResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preferences   *NotificationPreferences `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdatePreferencesResponse) Reset() {
+	*x = UpdatePreferencesResponse{}
+	mi := &file_notifications_v1_notifications_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdatePreferencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdatePreferencesResponse) ProtoMessage() {}
+
+func (x *UpdatePreferencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_v1_notifications_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdatePreferencesResponse.ProtoReflect.Descriptor instead.
+func (*UpdatePreferencesResponse) Descriptor() ([]byte, []int) {
+	return file_notifications_v1_notifications_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdatePreferencesResponse) GetPreferences() *NotificationPreferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
 var File_notifications_v1_notifications_proto protoreflect.FileDescriptor
 
 const file_notifications_v1_notifications_proto_rawDesc = "" +
 	"\n" +
 	"$notifications/v1/notifications.proto\x12\x10notifications.v1\"\x0f\n" +
-	"\rHealthRequest\"(\n" +
+	"\rHealthRequest\"Q\n" +
 	"\x0eHealthResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2c\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12'\n" +
+	"\x0fdefault_channel\x18\x02 \x01(\tR\x0edefaultChannel\"\xff\x01\n" +
+	"\x17NotificationPreferences\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12%\n" +
+	"\x0ealerts_enabled\x18\x02 \x01(\bR\ralertsEnabled\x12)\n" +
+	"\x10dispatch_enabled\x18\x03 \x01(\bR\x0fdispatchEnabled\x12\x1f\n" +
+	"\veta_enabled\x18\x04 \x01(\bR\n" +
+	"etaEnabled\x12\x18\n" +
+	"\achannel\x18\x05 \x01(\tR\achannel\x12\x1f\n" +
+	"\vwebhook_url\x18\x06 \x01(\tR\n" +
+	"webhookUrl\x12\x19\n" +
+	"\bemail_to\x18\a \x01(\tR\aemailTo\"4\n" +
+	"\x15GetPreferencesRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"e\n" +
+	"\x16GetPreferencesResponse\x12K\n" +
+	"\vpreferences\x18\x01 \x01(\v2).notifications.v1.NotificationPreferencesR\vpreferences\"g\n" +
+	"\x18UpdatePreferencesRequest\x12K\n" +
+	"\vpreferences\x18\x01 \x01(\v2).notifications.v1.NotificationPreferencesR\vpreferences\"h\n" +
+	"\x19UpdatePreferencesResponse\x12K\n" +
+	"\vpreferences\x18\x01 \x01(\v2).notifications.v1.NotificationPreferencesR\vpreferences2\xb6\x02\n" +
 	"\x14NotificationsService\x12K\n" +
-	"\x06Health\x12\x1f.notifications.v1.HealthRequest\x1a .notifications.v1.HealthResponseB\xd0\x01\n" +
+	"\x06Health\x12\x1f.notifications.v1.HealthRequest\x1a .notifications.v1.HealthResponse\x12c\n" +
+	"\x0eGetPreferences\x12'.notifications.v1.GetPreferencesRequest\x1a(.notifications.v1.GetPreferencesResponse\x12l\n" +
+	"\x11UpdatePreferences\x12*.notifications.v1.UpdatePreferencesRequest\x1a+.notifications.v1.UpdatePreferencesResponseB\xd0\x01\n" +
 	"\x14com.notifications.v1B\x12NotificationsProtoP\x01ZCgithub.com/keix40/omnifleet/gen/go/notifications/v1;notificationsv1\xa2\x02\x03NXX\xaa\x02\x10Notifications.V1\xca\x02\x10Notifications\\V1\xe2\x02\x1cNotifications\\V1\\GPBMetadata\xea\x02\x11Notifications::V1b\x06proto3"
 
 var (
@@ -125,19 +422,31 @@ func file_notifications_v1_notifications_proto_rawDescGZIP() []byte {
 	return file_notifications_v1_notifications_proto_rawDescData
 }
 
-var file_notifications_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_notifications_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_notifications_v1_notifications_proto_goTypes = []any{
-	(*HealthRequest)(nil),  // 0: notifications.v1.HealthRequest
-	(*HealthResponse)(nil), // 1: notifications.v1.HealthResponse
+	(*HealthRequest)(nil),             // 0: notifications.v1.HealthRequest
+	(*HealthResponse)(nil),            // 1: notifications.v1.HealthResponse
+	(*NotificationPreferences)(nil),   // 2: notifications.v1.NotificationPreferences
+	(*GetPreferencesRequest)(nil),     // 3: notifications.v1.GetPreferencesRequest
+	(*GetPreferencesResponse)(nil),    // 4: notifications.v1.GetPreferencesResponse
+	(*UpdatePreferencesRequest)(nil),  // 5: notifications.v1.UpdatePreferencesRequest
+	(*UpdatePreferencesResponse)(nil), // 6: notifications.v1.UpdatePreferencesResponse
 }
 var file_notifications_v1_notifications_proto_depIdxs = []int32{
-	0, // 0: notifications.v1.NotificationsService.Health:input_type -> notifications.v1.HealthRequest
-	1, // 1: notifications.v1.NotificationsService.Health:output_type -> notifications.v1.HealthResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: notifications.v1.GetPreferencesResponse.preferences:type_name -> notifications.v1.NotificationPreferences
+	2, // 1: notifications.v1.UpdatePreferencesRequest.preferences:type_name -> notifications.v1.NotificationPreferences
+	2, // 2: notifications.v1.UpdatePreferencesResponse.preferences:type_name -> notifications.v1.NotificationPreferences
+	0, // 3: notifications.v1.NotificationsService.Health:input_type -> notifications.v1.HealthRequest
+	3, // 4: notifications.v1.NotificationsService.GetPreferences:input_type -> notifications.v1.GetPreferencesRequest
+	5, // 5: notifications.v1.NotificationsService.UpdatePreferences:input_type -> notifications.v1.UpdatePreferencesRequest
+	1, // 6: notifications.v1.NotificationsService.Health:output_type -> notifications.v1.HealthResponse
+	4, // 7: notifications.v1.NotificationsService.GetPreferences:output_type -> notifications.v1.GetPreferencesResponse
+	6, // 8: notifications.v1.NotificationsService.UpdatePreferences:output_type -> notifications.v1.UpdatePreferencesResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_notifications_v1_notifications_proto_init() }
@@ -151,7 +460,7 @@ func file_notifications_v1_notifications_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notifications_v1_notifications_proto_rawDesc), len(file_notifications_v1_notifications_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

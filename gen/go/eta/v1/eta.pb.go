@@ -7,6 +7,7 @@
 package etav1
 
 import (
+	v1 "github.com/keix40/omnifleet/gen/go/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -101,17 +102,185 @@ func (x *HealthResponse) GetStatus() string {
 	return ""
 }
 
+type ComputeETARequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	VehicleId     string                 `protobuf:"bytes,2,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
+	Destination   *v1.GeoPoint           `protobuf:"bytes,3,opt,name=destination,proto3" json:"destination,omitempty"`
+	PublishUpdate bool                   `protobuf:"varint,4,opt,name=publish_update,json=publishUpdate,proto3" json:"publish_update,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ComputeETARequest) Reset() {
+	*x = ComputeETARequest{}
+	mi := &file_eta_v1_eta_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComputeETARequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComputeETARequest) ProtoMessage() {}
+
+func (x *ComputeETARequest) ProtoReflect() protoreflect.Message {
+	mi := &file_eta_v1_eta_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComputeETARequest.ProtoReflect.Descriptor instead.
+func (*ComputeETARequest) Descriptor() ([]byte, []int) {
+	return file_eta_v1_eta_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ComputeETARequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ComputeETARequest) GetVehicleId() string {
+	if x != nil {
+		return x.VehicleId
+	}
+	return ""
+}
+
+func (x *ComputeETARequest) GetDestination() *v1.GeoPoint {
+	if x != nil {
+		return x.Destination
+	}
+	return nil
+}
+
+func (x *ComputeETARequest) GetPublishUpdate() bool {
+	if x != nil {
+		return x.PublishUpdate
+	}
+	return false
+}
+
+type ComputeETAResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	VehicleId       string                 `protobuf:"bytes,1,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
+	DistanceMeters  float64                `protobuf:"fixed64,2,opt,name=distance_meters,json=distanceMeters,proto3" json:"distance_meters,omitempty"`
+	DurationSeconds float64                `protobuf:"fixed64,3,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	EtaUnix         int64                  `protobuf:"varint,4,opt,name=eta_unix,json=etaUnix,proto3" json:"eta_unix,omitempty"`
+	RoutingProvider string                 `protobuf:"bytes,5,opt,name=routing_provider,json=routingProvider,proto3" json:"routing_provider,omitempty"`
+	Origin          *v1.GeoPoint           `protobuf:"bytes,6,opt,name=origin,proto3" json:"origin,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ComputeETAResponse) Reset() {
+	*x = ComputeETAResponse{}
+	mi := &file_eta_v1_eta_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComputeETAResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComputeETAResponse) ProtoMessage() {}
+
+func (x *ComputeETAResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_eta_v1_eta_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComputeETAResponse.ProtoReflect.Descriptor instead.
+func (*ComputeETAResponse) Descriptor() ([]byte, []int) {
+	return file_eta_v1_eta_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ComputeETAResponse) GetVehicleId() string {
+	if x != nil {
+		return x.VehicleId
+	}
+	return ""
+}
+
+func (x *ComputeETAResponse) GetDistanceMeters() float64 {
+	if x != nil {
+		return x.DistanceMeters
+	}
+	return 0
+}
+
+func (x *ComputeETAResponse) GetDurationSeconds() float64 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
+}
+
+func (x *ComputeETAResponse) GetEtaUnix() int64 {
+	if x != nil {
+		return x.EtaUnix
+	}
+	return 0
+}
+
+func (x *ComputeETAResponse) GetRoutingProvider() string {
+	if x != nil {
+		return x.RoutingProvider
+	}
+	return ""
+}
+
+func (x *ComputeETAResponse) GetOrigin() *v1.GeoPoint {
+	if x != nil {
+		return x.Origin
+	}
+	return nil
+}
+
 var File_eta_v1_eta_proto protoreflect.FileDescriptor
 
 const file_eta_v1_eta_proto_rawDesc = "" +
 	"\n" +
-	"\x10eta/v1/eta.proto\x12\x06eta.v1\"\x0f\n" +
+	"\x10eta/v1/eta.proto\x12\x06eta.v1\x1a\x16common/v1/common.proto\"\x0f\n" +
 	"\rHealthRequest\"(\n" +
 	"\x0eHealthResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2E\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\"\xad\x01\n" +
+	"\x11ComputeETARequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1d\n" +
+	"\n" +
+	"vehicle_id\x18\x02 \x01(\tR\tvehicleId\x125\n" +
+	"\vdestination\x18\x03 \x01(\v2\x13.common.v1.GeoPointR\vdestination\x12%\n" +
+	"\x0epublish_update\x18\x04 \x01(\bR\rpublishUpdate\"\xfa\x01\n" +
+	"\x12ComputeETAResponse\x12\x1d\n" +
+	"\n" +
+	"vehicle_id\x18\x01 \x01(\tR\tvehicleId\x12'\n" +
+	"\x0fdistance_meters\x18\x02 \x01(\x01R\x0edistanceMeters\x12)\n" +
+	"\x10duration_seconds\x18\x03 \x01(\x01R\x0fdurationSeconds\x12\x19\n" +
+	"\beta_unix\x18\x04 \x01(\x03R\aetaUnix\x12)\n" +
+	"\x10routing_provider\x18\x05 \x01(\tR\x0froutingProvider\x12+\n" +
+	"\x06origin\x18\x06 \x01(\v2\x13.common.v1.GeoPointR\x06origin2\x8a\x01\n" +
 	"\n" +
 	"ETAService\x127\n" +
-	"\x06Health\x12\x15.eta.v1.HealthRequest\x1a\x16.eta.v1.HealthResponseB\x80\x01\n" +
+	"\x06Health\x12\x15.eta.v1.HealthRequest\x1a\x16.eta.v1.HealthResponse\x12C\n" +
+	"\n" +
+	"ComputeETA\x12\x19.eta.v1.ComputeETARequest\x1a\x1a.eta.v1.ComputeETAResponseB\x80\x01\n" +
 	"\n" +
 	"com.eta.v1B\bEtaProtoP\x01Z/github.com/keix40/omnifleet/gen/go/eta/v1;etav1\xa2\x02\x03EXX\xaa\x02\x06Eta.V1\xca\x02\x06Eta\\V1\xe2\x02\x12Eta\\V1\\GPBMetadata\xea\x02\aEta::V1b\x06proto3"
 
@@ -127,19 +296,26 @@ func file_eta_v1_eta_proto_rawDescGZIP() []byte {
 	return file_eta_v1_eta_proto_rawDescData
 }
 
-var file_eta_v1_eta_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_eta_v1_eta_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_eta_v1_eta_proto_goTypes = []any{
-	(*HealthRequest)(nil),  // 0: eta.v1.HealthRequest
-	(*HealthResponse)(nil), // 1: eta.v1.HealthResponse
+	(*HealthRequest)(nil),      // 0: eta.v1.HealthRequest
+	(*HealthResponse)(nil),     // 1: eta.v1.HealthResponse
+	(*ComputeETARequest)(nil),  // 2: eta.v1.ComputeETARequest
+	(*ComputeETAResponse)(nil), // 3: eta.v1.ComputeETAResponse
+	(*v1.GeoPoint)(nil),        // 4: common.v1.GeoPoint
 }
 var file_eta_v1_eta_proto_depIdxs = []int32{
-	0, // 0: eta.v1.ETAService.Health:input_type -> eta.v1.HealthRequest
-	1, // 1: eta.v1.ETAService.Health:output_type -> eta.v1.HealthResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4, // 0: eta.v1.ComputeETARequest.destination:type_name -> common.v1.GeoPoint
+	4, // 1: eta.v1.ComputeETAResponse.origin:type_name -> common.v1.GeoPoint
+	0, // 2: eta.v1.ETAService.Health:input_type -> eta.v1.HealthRequest
+	2, // 3: eta.v1.ETAService.ComputeETA:input_type -> eta.v1.ComputeETARequest
+	1, // 4: eta.v1.ETAService.Health:output_type -> eta.v1.HealthResponse
+	3, // 5: eta.v1.ETAService.ComputeETA:output_type -> eta.v1.ComputeETAResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_eta_v1_eta_proto_init() }
@@ -153,7 +329,7 @@ func file_eta_v1_eta_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_eta_v1_eta_proto_rawDesc), len(file_eta_v1_eta_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -14,7 +14,11 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	authv1 "github.com/keix40/omnifleet/gen/go/auth/v1"
+	billingv1 "github.com/keix40/omnifleet/gen/go/billing/v1"
 	commonv1 "github.com/keix40/omnifleet/gen/go/common/v1"
+	dispatchv1 "github.com/keix40/omnifleet/gen/go/dispatch/v1"
+	etav1 "github.com/keix40/omnifleet/gen/go/eta/v1"
+	notificationsv1 "github.com/keix40/omnifleet/gen/go/notifications/v1"
 	trackingv1 "github.com/keix40/omnifleet/gen/go/tracking/v1"
 	"github.com/keix40/omnifleet/pkg/auth"
 	"github.com/keix40/omnifleet/pkg/events"
@@ -27,20 +31,28 @@ import (
 )
 
 type Config struct {
-	AuthAddr     string
-	TrackingAddr string
-	NatsURL      string
-	DatabaseURL  string
-	JWT          auth.JWTSettings
-	ReplicaID    string
+	AuthAddr          string
+	TrackingAddr      string
+	ETAAddr           string
+	DispatchAddr      string
+	BillingAddr       string
+	NotificationsAddr string
+	NatsURL           string
+	DatabaseURL       string
+	JWT               auth.JWTSettings
+	ReplicaID         string
 }
 
 const wsTicketSubprotocolPrefix = "omnifleet.v1."
 
 type Server struct {
-	authClient     authv1.AuthServiceClient
-	trackingClient trackingv1.TrackingServiceClient
-	tokens         *auth.TokenIssuer
+	authClient          authv1.AuthServiceClient
+	trackingClient      trackingv1.TrackingServiceClient
+	etaClient           etav1.ETAServiceClient
+	dispatchClient      dispatchv1.DispatchServiceClient
+	billingClient       billingv1.BillingServiceClient
+	notificationsClient notificationsv1.NotificationsServiceClient
+	tokens              *auth.TokenIssuer
 	wsTickets      *auth.WSTicketStore
 	hub            *wsHub
 	nc             *nats.Conn
@@ -59,8 +71,45 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		authConn.Close()
 		return nil, func() {}, err
 	}
-	nc, err := nats.Connect(cfg.NatsURL)
+	etaConn, err := grpc.NewClient(cfg.ETAAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		trackConn.Close()
+		authConn.Close()
+		return nil, func() {}, err
+	}
+	dispatchConn, err := grpc.NewClient(cfg.DispatchAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		etaConn.Close()
+		trackConn.Close()
+		authConn.Close()
+		return nil, func() {}, err
+	}
+	billingConn, err := grpc.NewClient(cfg.BillingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		dispatchConn.Close()
+		etaConn.Close()
+		trackConn.Close()
+		authConn.Close()
+		return nil, func() {}, err
+	}
+	notifConn, err := grpc.NewClient(cfg.NotificationsAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		billingConn.Close()
+		dispatchConn.Close()
+		etaConn.Close()
+		trackConn.Close()
+		authConn.Close()
+		return nil, func() {}, err
+	}
+	if cfg.NatsURL != "" && os.Getenv("NATS_URL") == "" {
+		_ = os.Setenv("NATS_URL", cfg.NatsURL)
+	}
+	nc, err := events.ConnectNATSFromEnv()
+	if err != nil {
+		notifConn.Close()
+		billingConn.Close()
+		dispatchConn.Close()
+		etaConn.Close()
 		trackConn.Close()
 		authConn.Close()
 		return nil, func() {}, err
@@ -68,6 +117,10 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 	js, err := jetstream.New(nc)
 	if err != nil {
 		nc.Close()
+		notifConn.Close()
+		billingConn.Close()
+		dispatchConn.Close()
+		etaConn.Close()
 		trackConn.Close()
 		authConn.Close()
 		return nil, func() {}, err
@@ -96,9 +149,13 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 
 	hub := newHub()
 	s := &Server{
-		authClient:     authv1.NewAuthServiceClient(authConn),
-		trackingClient: trackingv1.NewTrackingServiceClient(trackConn),
-		tokens:         auth.NewTokenIssuerFromSettings(cfg.JWT, 24*time.Hour),
+		authClient:          authv1.NewAuthServiceClient(authConn),
+		trackingClient:      trackingv1.NewTrackingServiceClient(trackConn),
+		etaClient:           etav1.NewETAServiceClient(etaConn),
+		dispatchClient:      dispatchv1.NewDispatchServiceClient(dispatchConn),
+		billingClient:       billingv1.NewBillingServiceClient(billingConn),
+		notificationsClient: notificationsv1.NewNotificationsServiceClient(notifConn),
+		tokens:              auth.NewTokenIssuerFromSettings(cfg.JWT, 24*time.Hour),
 		wsTickets:      auth.NewWSTicketStore(cfg.JWT.Secret, 30*time.Second, ticketStore),
 		hub:            hub,
 		nc:             nc,
@@ -111,7 +168,11 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		if dbPool != nil {
 			dbPool.Close()
 		}
-		nc.Close()
+		events.ReleaseNATS(nc)
+		notifConn.Close()
+		billingConn.Close()
+		dispatchConn.Close()
+		etaConn.Close()
 		trackConn.Close()
 		authConn.Close()
 	}
@@ -123,7 +184,7 @@ func (s *Server) Router() http.Handler {
 	r.Use(middleware.RequestID, middleware.RealIP, middleware.Logger, middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
@@ -140,7 +201,23 @@ func (s *Server) Router() http.Handler {
 		protected.Post("/api/v1/tracking/positions", s.handleIngestPosition)
 		protected.Post("/api/v1/ws/fleet/ticket", s.handleWSTicket)
 		protected.Get("/api/v1/ws/fleet", s.handleWebSocket)
+
+		protected.Post("/api/v1/dispatch/jobs", s.handleCreateJob)
+		protected.Get("/api/v1/dispatch/jobs", s.handleListJobs)
+		protected.Get("/api/v1/dispatch/jobs/{jobID}", s.handleGetJob)
+		protected.Post("/api/v1/dispatch/jobs/{jobID}/assign", s.handleAssignJob)
+		protected.Post("/api/v1/dispatch/jobs/{jobID}/auto-assign", s.handleAutoAssignJob)
+		protected.Patch("/api/v1/dispatch/jobs/{jobID}/status", s.handleUpdateJobStatus)
+
+		protected.Post("/api/v1/eta/compute", s.handleComputeETA)
+
+		protected.Get("/api/v1/billing/subscription", s.handleGetSubscription)
+		protected.Get("/api/v1/billing/usage", s.handleGetUsage)
+
+		protected.Get("/api/v1/notifications/preferences", s.handleGetNotificationPrefs)
+		protected.Put("/api/v1/notifications/preferences", s.handleUpdateNotificationPrefs)
 	})
+	r.Post("/api/v1/billing/stripe/webhook", s.handleStripeWebhook)
 	// Browser WebSocket: short-lived ticket via Sec-WebSocket-Protocol (see README security model).
 	r.Get("/api/v1/ws/fleet/live", s.handleWebSocketLive)
 	return r

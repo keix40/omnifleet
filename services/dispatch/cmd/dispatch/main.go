@@ -5,35 +5,41 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	dispatchv1 "github.com/keix40/omnifleet/gen/go/dispatch/v1"
+	"github.com/keix40/omnifleet/services/dispatch/internal/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-type dispatchServer struct {
-	dispatchv1.UnimplementedDispatchServiceServer
-}
-
-func (dispatchServer) Health(_ context.Context, _ *dispatchv1.HealthRequest) (*dispatchv1.HealthResponse, error) {
-	// TODO: job assignment, capacity constraints, dispatcher approval flows.
-	return &dispatchv1.HealthResponse{Status: "stub"}, nil
-}
-
 func main() {
 	addr := env("DISPATCH_GRPC_ADDR", ":50055")
+	dsn := env("DATABASE_URL", "")
+	natsURL := env("NATS_URL", "nats://localhost:4222")
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	svc, cleanup, err := server.New(ctx, dsn, natsURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cleanup()
+
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := grpc.NewServer()
-	dispatchv1.RegisterDispatchServiceServer(s, dispatchServer{})
+	gs := grpc.NewServer()
+	dispatchv1.RegisterDispatchServiceServer(gs, svc)
 	hs := health.NewServer()
-	healthpb.RegisterHealthServer(s, hs)
+	healthpb.RegisterHealthServer(gs, hs)
 	hs.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-	log.Printf("dispatch service (stub) on %s", addr)
-	log.Fatal(s.Serve(lis))
+	log.Printf("dispatch service on %s", addr)
+	log.Fatal(gs.Serve(lis))
 }
 
 func env(k, d string) string {

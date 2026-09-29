@@ -6,6 +6,7 @@ COPY proto ./proto
 COPY gen ./gen
 COPY pkg ./pkg
 COPY services ./services
+COPY cmd/omnifleet-all ./cmd/omnifleet-all
 ARG SERVICE
 WORKDIR /src/services/${SERVICE}
 RUN go mod download

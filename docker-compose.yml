@@ -82,6 +82,76 @@ services:
     ports:
       - "50053:50053"
 
+  eta:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.go
+      args:
+        SERVICE: eta
+    environment:
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
+      NATS_URL: nats://nats:4222
+      ETA_GRPC_ADDR: ":50054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    ports:
+      - "50054:50054"
+
+  dispatch:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.go
+      args:
+        SERVICE: dispatch
+    environment:
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
+      NATS_URL: nats://nats:4222
+      DISPATCH_GRPC_ADDR: ":50055"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    ports:
+      - "50055:50055"
+
+  billing:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.go
+      args:
+        SERVICE: billing
+    environment:
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
+      BILLING_GRPC_ADDR: ":50056"
+      STRIPE_PROVIDER: fake
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "50056:50056"
+
+  notifications:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.go
+      args:
+        SERVICE: notifications
+    environment:
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
+      NATS_URL: nats://nats:4222
+      NOTIFICATIONS_GRPC_ADDR: ":50057"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    ports:
+      - "50057:50057"
+
   gateway:
     build:
       context: .
@@ -92,6 +162,10 @@ services:
       GATEWAY_HTTP_ADDR: "0.0.0.0:8080"
       AUTH_GRPC_ADDR: auth:50051
       TRACKING_GRPC_ADDR: tracking:50052
+      ETA_GRPC_ADDR: eta:50054
+      DISPATCH_GRPC_ADDR: dispatch:50055
+      BILLING_GRPC_ADDR: billing:50056
+      NOTIFICATIONS_GRPC_ADDR: notifications:50057
       NATS_URL: nats://nats:4222
       DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
       OMNIFLEET_DEV_MODE: "1"
@@ -101,6 +175,14 @@ services:
       auth:
         condition: service_started
       tracking:
+        condition: service_started
+      eta:
+        condition: service_started
+      dispatch:
+        condition: service_started
+      billing:
+        condition: service_started
+      notifications:
         condition: service_started
       nats:
         condition: service_started

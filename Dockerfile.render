@@ -1,0 +1,19 @@
+FROM golang:1.22-alpine AS build
+RUN apk add --no-cache git ca-certificates
+WORKDIR /src
+COPY go.work buf.yaml buf.gen.yaml ./
+COPY proto ./proto
+COPY gen ./gen
+COPY pkg ./pkg
+COPY services ./services
+COPY cmd/omnifleet-all ./cmd/omnifleet-all
+WORKDIR /src/cmd/omnifleet-all
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o /out/omnifleet-all .
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=build /out/omnifleet-all /omnifleet-all
+USER nonroot:nonroot
+ENV OMNIFLEET_SHARED_NATS=1
+EXPOSE 8080
+ENTRYPOINT ["/omnifleet-all"]

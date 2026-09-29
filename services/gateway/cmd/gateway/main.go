@@ -29,12 +29,16 @@ func main() {
 	defer stop()
 
 	srv, cleanup, err := httpapi.NewServer(ctx, httpapi.Config{
-		AuthAddr:     authAddr,
-		TrackingAddr: trackingAddr,
-		NatsURL:      natsURL,
-		DatabaseURL:  databaseURL,
-		JWT:          jwtSettings,
-		ReplicaID:    os.Getenv("GATEWAY_REPLICA_ID"),
+		AuthAddr:          authAddr,
+		TrackingAddr:      trackingAddr,
+		ETAAddr:           env("ETA_GRPC_ADDR", "localhost:50054"),
+		DispatchAddr:      env("DISPATCH_GRPC_ADDR", "localhost:50055"),
+		BillingAddr:       env("BILLING_GRPC_ADDR", "localhost:50056"),
+		NotificationsAddr: env("NOTIFICATIONS_GRPC_ADDR", "localhost:50057"),
+		NatsURL:           natsURL,
+		DatabaseURL:       databaseURL,
+		JWT:               jwtSettings,
+		ReplicaID:         os.Getenv("GATEWAY_REPLICA_ID"),
 	})
 	if err != nil {
 		log.Fatalf("gateway: %v", err)

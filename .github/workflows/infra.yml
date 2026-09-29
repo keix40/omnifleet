@@ -5,6 +5,8 @@ on:
     paths:
       - "deploy/terraform/**"
       - "deploy/helm/**"
+      - "Dockerfile.render"
+      - "render.yaml"
       - ".github/workflows/infra.yml"
   push:
     branches: [main]
@@ -36,6 +38,6 @@ jobs:
       - name: Helm lint charts
         run: |
           helm lint deploy/helm/omnifleet
-          for chart in gateway auth tracking geofencing; do
+          for chart in gateway auth tracking geofencing eta dispatch billing notifications; do
             helm lint deploy/helm/charts/$chart
           done

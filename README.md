@@ -133,6 +133,35 @@ make tf-validate
 make helm-lint
 ```
 
+## Free deployment (Render + Neon + Synadia + Vercel)
+
+Single-process API for Render’s **free** web tier (512 MB, no private networking):
+
+| Component | Service | Notes |
+|-----------|---------|--------|
+| API | [Render](https://render.com) | Build `Dockerfile.render`, blueprint `render.yaml` (region: **Singapore**) |
+| Postgres | [Neon](https://neon.tech) | Run `scripts/bootstrap-neon.sh` once; see [docs/neon-bootstrap.md](docs/neon-bootstrap.md) |
+| NATS | [Synadia Cloud](https://www.synadia.com/cloud) free | `NATS_URL=tls://connect.ngs.global`, `NATS_TLS=true`, `NATS_CREDS` (`.creds` file contents) |
+| Dashboard | [Vercel](https://vercel.com) | Root `web/dashboard`; set env vars below |
+
+**Render env (minimum):** `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `NATS_URL`, `NATS_CREDS`, `NATS_TLS=true`, `OMNIFLEET_SHARED_NATS=1`, `OMNIFLEET_APP_PASSWORD` (when using dual-role bootstrap).
+
+**Vercel env:**
+
+- `NEXT_PUBLIC_GATEWAY_URL` — public Render URL (e.g. `https://omnifleet-api.onrender.com`)
+- `NEXT_PUBLIC_WS_URL` — same host with `wss://` (e.g. `wss://omnifleet-api.onrender.com`)
+
+Local all-in-one:
+
+```bash
+export OMNIFLEET_SHARED_NATS=1
+export DATABASE_URL=postgres://omnifleet_app:...@localhost:5432/omnifleet?sslmode=disable
+export NATS_URL=nats://localhost:4222
+export JWT_SECRET=dev-only-change-me-min-32-chars
+export PORT=8080
+go run ./cmd/omnifleet-all
+```
+
 ## Deployment guide
 
 1. **Infrastructure:** `cd deploy/terraform && terraform init && terraform plan` (AWS VPC + EKS + Aurora). Do not apply from CI.
@@ -148,11 +177,12 @@ See [docs/preview-environments.md](docs/preview-environments.md) for PR preview 
 |-----------|--------|
 | Vertical slice (auth, tracking, geofencing, gateway, dashboard) | Done |
 | RLS + RBAC tests | Done |
-| ETA / routing | Stub |
-| Dispatch assignment | Stub |
-| Stripe billing webhooks | Stub |
-| Notifications providers | Stub |
-| Expo driver background GPS | Stub |
+| ETA / routing | Done |
+| Dispatch assignment | Done |
+| Stripe billing webhooks | Done (fake provider in dev) |
+| Notifications providers | Done |
+| Expo driver background GPS | Done |
+| Free-tier all-in-one (Render) | Done |
 | PR preview automation | Documented |
 
 ## CI and branch protection

@@ -7,6 +7,7 @@
 package dispatchv1
 
 import (
+	v1 "github.com/keix40/omnifleet/gen/go/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -20,6 +21,67 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type JobStatus int32
+
+const (
+	JobStatus_JOB_STATUS_UNSPECIFIED JobStatus = 0
+	JobStatus_JOB_STATUS_CREATED     JobStatus = 1
+	JobStatus_JOB_STATUS_ASSIGNED    JobStatus = 2
+	JobStatus_JOB_STATUS_EN_ROUTE    JobStatus = 3
+	JobStatus_JOB_STATUS_PICKED_UP   JobStatus = 4
+	JobStatus_JOB_STATUS_DELIVERED   JobStatus = 5
+	JobStatus_JOB_STATUS_CANCELLED   JobStatus = 6
+)
+
+// Enum value maps for JobStatus.
+var (
+	JobStatus_name = map[int32]string{
+		0: "JOB_STATUS_UNSPECIFIED",
+		1: "JOB_STATUS_CREATED",
+		2: "JOB_STATUS_ASSIGNED",
+		3: "JOB_STATUS_EN_ROUTE",
+		4: "JOB_STATUS_PICKED_UP",
+		5: "JOB_STATUS_DELIVERED",
+		6: "JOB_STATUS_CANCELLED",
+	}
+	JobStatus_value = map[string]int32{
+		"JOB_STATUS_UNSPECIFIED": 0,
+		"JOB_STATUS_CREATED":     1,
+		"JOB_STATUS_ASSIGNED":    2,
+		"JOB_STATUS_EN_ROUTE":    3,
+		"JOB_STATUS_PICKED_UP":   4,
+		"JOB_STATUS_DELIVERED":   5,
+		"JOB_STATUS_CANCELLED":   6,
+	}
+)
+
+func (x JobStatus) Enum() *JobStatus {
+	p := new(JobStatus)
+	*p = x
+	return p
+}
+
+func (x JobStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (JobStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_dispatch_v1_dispatch_proto_enumTypes[0].Descriptor()
+}
+
+func (JobStatus) Type() protoreflect.EnumType {
+	return &file_dispatch_v1_dispatch_proto_enumTypes[0]
+}
+
+func (x JobStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use JobStatus.Descriptor instead.
+func (JobStatus) EnumDescriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{0}
+}
 
 type HealthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -101,16 +163,885 @@ func (x *HealthResponse) GetStatus() string {
 	return ""
 }
 
+type Job struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TenantId      string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Status        JobStatus              `protobuf:"varint,3,opt,name=status,proto3,enum=dispatch.v1.JobStatus" json:"status,omitempty"`
+	Pickup        *v1.GeoPoint           `protobuf:"bytes,4,opt,name=pickup,proto3" json:"pickup,omitempty"`
+	Dropoff       *v1.GeoPoint           `protobuf:"bytes,5,opt,name=dropoff,proto3" json:"dropoff,omitempty"`
+	PickupLabel   string                 `protobuf:"bytes,6,opt,name=pickup_label,json=pickupLabel,proto3" json:"pickup_label,omitempty"`
+	DropoffLabel  string                 `protobuf:"bytes,7,opt,name=dropoff_label,json=dropoffLabel,proto3" json:"dropoff_label,omitempty"`
+	VehicleId     string                 `protobuf:"bytes,8,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
+	DriverId      string                 `protobuf:"bytes,9,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	CreatedAtUnix int64                  `protobuf:"varint,10,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
+	UpdatedAtUnix int64                  `protobuf:"varint,11,opt,name=updated_at_unix,json=updatedAtUnix,proto3" json:"updated_at_unix,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Job) Reset() {
+	*x = Job{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Job) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Job) ProtoMessage() {}
+
+func (x *Job) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Job.ProtoReflect.Descriptor instead.
+func (*Job) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Job) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Job) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *Job) GetStatus() JobStatus {
+	if x != nil {
+		return x.Status
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *Job) GetPickup() *v1.GeoPoint {
+	if x != nil {
+		return x.Pickup
+	}
+	return nil
+}
+
+func (x *Job) GetDropoff() *v1.GeoPoint {
+	if x != nil {
+		return x.Dropoff
+	}
+	return nil
+}
+
+func (x *Job) GetPickupLabel() string {
+	if x != nil {
+		return x.PickupLabel
+	}
+	return ""
+}
+
+func (x *Job) GetDropoffLabel() string {
+	if x != nil {
+		return x.DropoffLabel
+	}
+	return ""
+}
+
+func (x *Job) GetVehicleId() string {
+	if x != nil {
+		return x.VehicleId
+	}
+	return ""
+}
+
+func (x *Job) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *Job) GetCreatedAtUnix() int64 {
+	if x != nil {
+		return x.CreatedAtUnix
+	}
+	return 0
+}
+
+func (x *Job) GetUpdatedAtUnix() int64 {
+	if x != nil {
+		return x.UpdatedAtUnix
+	}
+	return 0
+}
+
+type CreateJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Pickup        *v1.GeoPoint           `protobuf:"bytes,2,opt,name=pickup,proto3" json:"pickup,omitempty"`
+	Dropoff       *v1.GeoPoint           `protobuf:"bytes,3,opt,name=dropoff,proto3" json:"dropoff,omitempty"`
+	PickupLabel   string                 `protobuf:"bytes,4,opt,name=pickup_label,json=pickupLabel,proto3" json:"pickup_label,omitempty"`
+	DropoffLabel  string                 `protobuf:"bytes,5,opt,name=dropoff_label,json=dropoffLabel,proto3" json:"dropoff_label,omitempty"`
+	AutoAssign    bool                   `protobuf:"varint,6,opt,name=auto_assign,json=autoAssign,proto3" json:"auto_assign,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateJobRequest) Reset() {
+	*x = CreateJobRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateJobRequest) ProtoMessage() {}
+
+func (x *CreateJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateJobRequest.ProtoReflect.Descriptor instead.
+func (*CreateJobRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateJobRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CreateJobRequest) GetPickup() *v1.GeoPoint {
+	if x != nil {
+		return x.Pickup
+	}
+	return nil
+}
+
+func (x *CreateJobRequest) GetDropoff() *v1.GeoPoint {
+	if x != nil {
+		return x.Dropoff
+	}
+	return nil
+}
+
+func (x *CreateJobRequest) GetPickupLabel() string {
+	if x != nil {
+		return x.PickupLabel
+	}
+	return ""
+}
+
+func (x *CreateJobRequest) GetDropoffLabel() string {
+	if x != nil {
+		return x.DropoffLabel
+	}
+	return ""
+}
+
+func (x *CreateJobRequest) GetAutoAssign() bool {
+	if x != nil {
+		return x.AutoAssign
+	}
+	return false
+}
+
+type CreateJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateJobResponse) Reset() {
+	*x = CreateJobResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateJobResponse) ProtoMessage() {}
+
+func (x *CreateJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateJobResponse.ProtoReflect.Descriptor instead.
+func (*CreateJobResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CreateJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type GetJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	JobId         string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetJobRequest) Reset() {
+	*x = GetJobRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetJobRequest) ProtoMessage() {}
+
+func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetJobRequest.ProtoReflect.Descriptor instead.
+func (*GetJobRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetJobRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *GetJobRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+type GetJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetJobResponse) Reset() {
+	*x = GetJobResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetJobResponse) ProtoMessage() {}
+
+func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetJobResponse.ProtoReflect.Descriptor instead.
+func (*GetJobResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type ListJobsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	DriverId      string                 `protobuf:"bytes,2,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	StatusFilter  JobStatus              `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=dispatch.v1.JobStatus" json:"status_filter,omitempty"`
+	Page          *v1.Pagination         `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListJobsRequest) Reset() {
+	*x = ListJobsRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListJobsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListJobsRequest) ProtoMessage() {}
+
+func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListJobsRequest.ProtoReflect.Descriptor instead.
+func (*ListJobsRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListJobsRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ListJobsRequest) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *ListJobsRequest) GetStatusFilter() JobStatus {
+	if x != nil {
+		return x.StatusFilter
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *ListJobsRequest) GetPage() *v1.Pagination {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListJobsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []*Job                 `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListJobsResponse) Reset() {
+	*x = ListJobsResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListJobsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListJobsResponse) ProtoMessage() {}
+
+func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListJobsResponse.ProtoReflect.Descriptor instead.
+func (*ListJobsResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListJobsResponse) GetJobs() []*Job {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+func (x *ListJobsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type AssignJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	JobId         string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	VehicleId     string                 `protobuf:"bytes,3,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
+	DriverId      string                 `protobuf:"bytes,4,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignJobRequest) Reset() {
+	*x = AssignJobRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignJobRequest) ProtoMessage() {}
+
+func (x *AssignJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignJobRequest.ProtoReflect.Descriptor instead.
+func (*AssignJobRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AssignJobRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *AssignJobRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *AssignJobRequest) GetVehicleId() string {
+	if x != nil {
+		return x.VehicleId
+	}
+	return ""
+}
+
+func (x *AssignJobRequest) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+type AssignJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignJobResponse) Reset() {
+	*x = AssignJobResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignJobResponse) ProtoMessage() {}
+
+func (x *AssignJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignJobResponse.ProtoReflect.Descriptor instead.
+func (*AssignJobResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AssignJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type AutoAssignNearestRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	JobId         string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AutoAssignNearestRequest) Reset() {
+	*x = AutoAssignNearestRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AutoAssignNearestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AutoAssignNearestRequest) ProtoMessage() {}
+
+func (x *AutoAssignNearestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AutoAssignNearestRequest.ProtoReflect.Descriptor instead.
+func (*AutoAssignNearestRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AutoAssignNearestRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *AutoAssignNearestRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+type AutoAssignNearestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	VehicleId     string                 `protobuf:"bytes,2,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AutoAssignNearestResponse) Reset() {
+	*x = AutoAssignNearestResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AutoAssignNearestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AutoAssignNearestResponse) ProtoMessage() {}
+
+func (x *AutoAssignNearestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AutoAssignNearestResponse.ProtoReflect.Descriptor instead.
+func (*AutoAssignNearestResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AutoAssignNearestResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+func (x *AutoAssignNearestResponse) GetVehicleId() string {
+	if x != nil {
+		return x.VehicleId
+	}
+	return ""
+}
+
+type UpdateJobStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	JobId         string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	Status        JobStatus              `protobuf:"varint,3,opt,name=status,proto3,enum=dispatch.v1.JobStatus" json:"status,omitempty"`
+	ActorUserId   string                 `protobuf:"bytes,4,opt,name=actor_user_id,json=actorUserId,proto3" json:"actor_user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateJobStatusRequest) Reset() {
+	*x = UpdateJobStatusRequest{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateJobStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateJobStatusRequest) ProtoMessage() {}
+
+func (x *UpdateJobStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateJobStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateJobStatusRequest) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *UpdateJobStatusRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *UpdateJobStatusRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *UpdateJobStatusRequest) GetStatus() JobStatus {
+	if x != nil {
+		return x.Status
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *UpdateJobStatusRequest) GetActorUserId() string {
+	if x != nil {
+		return x.ActorUserId
+	}
+	return ""
+}
+
+type UpdateJobStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateJobStatusResponse) Reset() {
+	*x = UpdateJobStatusResponse{}
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateJobStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateJobStatusResponse) ProtoMessage() {}
+
+func (x *UpdateJobStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dispatch_v1_dispatch_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateJobStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateJobStatusResponse) Descriptor() ([]byte, []int) {
+	return file_dispatch_v1_dispatch_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UpdateJobStatusResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
 var File_dispatch_v1_dispatch_proto protoreflect.FileDescriptor
 
 const file_dispatch_v1_dispatch_proto_rawDesc = "" +
 	"\n" +
-	"\x1adispatch/v1/dispatch.proto\x12\vdispatch.v1\"\x0f\n" +
+	"\x1adispatch/v1/dispatch.proto\x12\vdispatch.v1\x1a\x16common/v1/common.proto\"\x0f\n" +
 	"\rHealthRequest\"(\n" +
 	"\x0eHealthResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2T\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\"\x92\x03\n" +
+	"\x03Job\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12.\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x16.dispatch.v1.JobStatusR\x06status\x12+\n" +
+	"\x06pickup\x18\x04 \x01(\v2\x13.common.v1.GeoPointR\x06pickup\x12-\n" +
+	"\adropoff\x18\x05 \x01(\v2\x13.common.v1.GeoPointR\adropoff\x12!\n" +
+	"\fpickup_label\x18\x06 \x01(\tR\vpickupLabel\x12#\n" +
+	"\rdropoff_label\x18\a \x01(\tR\fdropoffLabel\x12\x1d\n" +
+	"\n" +
+	"vehicle_id\x18\b \x01(\tR\tvehicleId\x12\x1b\n" +
+	"\tdriver_id\x18\t \x01(\tR\bdriverId\x12&\n" +
+	"\x0fcreated_at_unix\x18\n" +
+	" \x01(\x03R\rcreatedAtUnix\x12&\n" +
+	"\x0fupdated_at_unix\x18\v \x01(\x03R\rupdatedAtUnix\"\xf4\x01\n" +
+	"\x10CreateJobRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12+\n" +
+	"\x06pickup\x18\x02 \x01(\v2\x13.common.v1.GeoPointR\x06pickup\x12-\n" +
+	"\adropoff\x18\x03 \x01(\v2\x13.common.v1.GeoPointR\adropoff\x12!\n" +
+	"\fpickup_label\x18\x04 \x01(\tR\vpickupLabel\x12#\n" +
+	"\rdropoff_label\x18\x05 \x01(\tR\fdropoffLabel\x12\x1f\n" +
+	"\vauto_assign\x18\x06 \x01(\bR\n" +
+	"autoAssign\"7\n" +
+	"\x11CreateJobResponse\x12\"\n" +
+	"\x03job\x18\x01 \x01(\v2\x10.dispatch.v1.JobR\x03job\"C\n" +
+	"\rGetJobRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x15\n" +
+	"\x06job_id\x18\x02 \x01(\tR\x05jobId\"4\n" +
+	"\x0eGetJobResponse\x12\"\n" +
+	"\x03job\x18\x01 \x01(\v2\x10.dispatch.v1.JobR\x03job\"\xb3\x01\n" +
+	"\x0fListJobsRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
+	"\tdriver_id\x18\x02 \x01(\tR\bdriverId\x12;\n" +
+	"\rstatus_filter\x18\x03 \x01(\x0e2\x16.dispatch.v1.JobStatusR\fstatusFilter\x12)\n" +
+	"\x04page\x18\x04 \x01(\v2\x15.common.v1.PaginationR\x04page\"`\n" +
+	"\x10ListJobsResponse\x12$\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x10.dispatch.v1.JobR\x04jobs\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x82\x01\n" +
+	"\x10AssignJobRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x15\n" +
+	"\x06job_id\x18\x02 \x01(\tR\x05jobId\x12\x1d\n" +
+	"\n" +
+	"vehicle_id\x18\x03 \x01(\tR\tvehicleId\x12\x1b\n" +
+	"\tdriver_id\x18\x04 \x01(\tR\bdriverId\"7\n" +
+	"\x11AssignJobResponse\x12\"\n" +
+	"\x03job\x18\x01 \x01(\v2\x10.dispatch.v1.JobR\x03job\"N\n" +
+	"\x18AutoAssignNearestRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x15\n" +
+	"\x06job_id\x18\x02 \x01(\tR\x05jobId\"^\n" +
+	"\x19AutoAssignNearestResponse\x12\"\n" +
+	"\x03job\x18\x01 \x01(\v2\x10.dispatch.v1.JobR\x03job\x12\x1d\n" +
+	"\n" +
+	"vehicle_id\x18\x02 \x01(\tR\tvehicleId\"\xa0\x01\n" +
+	"\x16UpdateJobStatusRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x15\n" +
+	"\x06job_id\x18\x02 \x01(\tR\x05jobId\x12.\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x16.dispatch.v1.JobStatusR\x06status\x12\"\n" +
+	"\ractor_user_id\x18\x04 \x01(\tR\vactorUserId\"=\n" +
+	"\x17UpdateJobStatusResponse\x12\"\n" +
+	"\x03job\x18\x01 \x01(\v2\x10.dispatch.v1.JobR\x03job*\xbf\x01\n" +
+	"\tJobStatus\x12\x1a\n" +
+	"\x16JOB_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12JOB_STATUS_CREATED\x10\x01\x12\x17\n" +
+	"\x13JOB_STATUS_ASSIGNED\x10\x02\x12\x17\n" +
+	"\x13JOB_STATUS_EN_ROUTE\x10\x03\x12\x18\n" +
+	"\x14JOB_STATUS_PICKED_UP\x10\x04\x12\x18\n" +
+	"\x14JOB_STATUS_DELIVERED\x10\x05\x12\x18\n" +
+	"\x14JOB_STATUS_CANCELLED\x10\x062\xba\x04\n" +
 	"\x0fDispatchService\x12A\n" +
-	"\x06Health\x12\x1a.dispatch.v1.HealthRequest\x1a\x1b.dispatch.v1.HealthResponseB\xa8\x01\n" +
+	"\x06Health\x12\x1a.dispatch.v1.HealthRequest\x1a\x1b.dispatch.v1.HealthResponse\x12J\n" +
+	"\tCreateJob\x12\x1d.dispatch.v1.CreateJobRequest\x1a\x1e.dispatch.v1.CreateJobResponse\x12A\n" +
+	"\x06GetJob\x12\x1a.dispatch.v1.GetJobRequest\x1a\x1b.dispatch.v1.GetJobResponse\x12G\n" +
+	"\bListJobs\x12\x1c.dispatch.v1.ListJobsRequest\x1a\x1d.dispatch.v1.ListJobsResponse\x12J\n" +
+	"\tAssignJob\x12\x1d.dispatch.v1.AssignJobRequest\x1a\x1e.dispatch.v1.AssignJobResponse\x12b\n" +
+	"\x11AutoAssignNearest\x12%.dispatch.v1.AutoAssignNearestRequest\x1a&.dispatch.v1.AutoAssignNearestResponse\x12\\\n" +
+	"\x0fUpdateJobStatus\x12#.dispatch.v1.UpdateJobStatusRequest\x1a$.dispatch.v1.UpdateJobStatusResponseB\xa8\x01\n" +
 	"\x0fcom.dispatch.v1B\rDispatchProtoP\x01Z9github.com/keix40/omnifleet/gen/go/dispatch/v1;dispatchv1\xa2\x02\x03DXX\xaa\x02\vDispatch.V1\xca\x02\vDispatch\\V1\xe2\x02\x17Dispatch\\V1\\GPBMetadata\xea\x02\fDispatch::V1b\x06proto3"
 
 var (
@@ -125,19 +1056,62 @@ func file_dispatch_v1_dispatch_proto_rawDescGZIP() []byte {
 	return file_dispatch_v1_dispatch_proto_rawDescData
 }
 
-var file_dispatch_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_dispatch_v1_dispatch_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_dispatch_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_dispatch_v1_dispatch_proto_goTypes = []any{
-	(*HealthRequest)(nil),  // 0: dispatch.v1.HealthRequest
-	(*HealthResponse)(nil), // 1: dispatch.v1.HealthResponse
+	(JobStatus)(0),                    // 0: dispatch.v1.JobStatus
+	(*HealthRequest)(nil),             // 1: dispatch.v1.HealthRequest
+	(*HealthResponse)(nil),            // 2: dispatch.v1.HealthResponse
+	(*Job)(nil),                       // 3: dispatch.v1.Job
+	(*CreateJobRequest)(nil),          // 4: dispatch.v1.CreateJobRequest
+	(*CreateJobResponse)(nil),         // 5: dispatch.v1.CreateJobResponse
+	(*GetJobRequest)(nil),             // 6: dispatch.v1.GetJobRequest
+	(*GetJobResponse)(nil),            // 7: dispatch.v1.GetJobResponse
+	(*ListJobsRequest)(nil),           // 8: dispatch.v1.ListJobsRequest
+	(*ListJobsResponse)(nil),          // 9: dispatch.v1.ListJobsResponse
+	(*AssignJobRequest)(nil),          // 10: dispatch.v1.AssignJobRequest
+	(*AssignJobResponse)(nil),         // 11: dispatch.v1.AssignJobResponse
+	(*AutoAssignNearestRequest)(nil),  // 12: dispatch.v1.AutoAssignNearestRequest
+	(*AutoAssignNearestResponse)(nil), // 13: dispatch.v1.AutoAssignNearestResponse
+	(*UpdateJobStatusRequest)(nil),    // 14: dispatch.v1.UpdateJobStatusRequest
+	(*UpdateJobStatusResponse)(nil),   // 15: dispatch.v1.UpdateJobStatusResponse
+	(*v1.GeoPoint)(nil),               // 16: common.v1.GeoPoint
+	(*v1.Pagination)(nil),             // 17: common.v1.Pagination
 }
 var file_dispatch_v1_dispatch_proto_depIdxs = []int32{
-	0, // 0: dispatch.v1.DispatchService.Health:input_type -> dispatch.v1.HealthRequest
-	1, // 1: dispatch.v1.DispatchService.Health:output_type -> dispatch.v1.HealthResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: dispatch.v1.Job.status:type_name -> dispatch.v1.JobStatus
+	16, // 1: dispatch.v1.Job.pickup:type_name -> common.v1.GeoPoint
+	16, // 2: dispatch.v1.Job.dropoff:type_name -> common.v1.GeoPoint
+	16, // 3: dispatch.v1.CreateJobRequest.pickup:type_name -> common.v1.GeoPoint
+	16, // 4: dispatch.v1.CreateJobRequest.dropoff:type_name -> common.v1.GeoPoint
+	3,  // 5: dispatch.v1.CreateJobResponse.job:type_name -> dispatch.v1.Job
+	3,  // 6: dispatch.v1.GetJobResponse.job:type_name -> dispatch.v1.Job
+	0,  // 7: dispatch.v1.ListJobsRequest.status_filter:type_name -> dispatch.v1.JobStatus
+	17, // 8: dispatch.v1.ListJobsRequest.page:type_name -> common.v1.Pagination
+	3,  // 9: dispatch.v1.ListJobsResponse.jobs:type_name -> dispatch.v1.Job
+	3,  // 10: dispatch.v1.AssignJobResponse.job:type_name -> dispatch.v1.Job
+	3,  // 11: dispatch.v1.AutoAssignNearestResponse.job:type_name -> dispatch.v1.Job
+	0,  // 12: dispatch.v1.UpdateJobStatusRequest.status:type_name -> dispatch.v1.JobStatus
+	3,  // 13: dispatch.v1.UpdateJobStatusResponse.job:type_name -> dispatch.v1.Job
+	1,  // 14: dispatch.v1.DispatchService.Health:input_type -> dispatch.v1.HealthRequest
+	4,  // 15: dispatch.v1.DispatchService.CreateJob:input_type -> dispatch.v1.CreateJobRequest
+	6,  // 16: dispatch.v1.DispatchService.GetJob:input_type -> dispatch.v1.GetJobRequest
+	8,  // 17: dispatch.v1.DispatchService.ListJobs:input_type -> dispatch.v1.ListJobsRequest
+	10, // 18: dispatch.v1.DispatchService.AssignJob:input_type -> dispatch.v1.AssignJobRequest
+	12, // 19: dispatch.v1.DispatchService.AutoAssignNearest:input_type -> dispatch.v1.AutoAssignNearestRequest
+	14, // 20: dispatch.v1.DispatchService.UpdateJobStatus:input_type -> dispatch.v1.UpdateJobStatusRequest
+	2,  // 21: dispatch.v1.DispatchService.Health:output_type -> dispatch.v1.HealthResponse
+	5,  // 22: dispatch.v1.DispatchService.CreateJob:output_type -> dispatch.v1.CreateJobResponse
+	7,  // 23: dispatch.v1.DispatchService.GetJob:output_type -> dispatch.v1.GetJobResponse
+	9,  // 24: dispatch.v1.DispatchService.ListJobs:output_type -> dispatch.v1.ListJobsResponse
+	11, // 25: dispatch.v1.DispatchService.AssignJob:output_type -> dispatch.v1.AssignJobResponse
+	13, // 26: dispatch.v1.DispatchService.AutoAssignNearest:output_type -> dispatch.v1.AutoAssignNearestResponse
+	15, // 27: dispatch.v1.DispatchService.UpdateJobStatus:output_type -> dispatch.v1.UpdateJobStatusResponse
+	21, // [21:28] is the sub-list for method output_type
+	14, // [14:21] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_dispatch_v1_dispatch_proto_init() }
@@ -150,13 +1124,14 @@ func file_dispatch_v1_dispatch_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dispatch_v1_dispatch_proto_rawDesc), len(file_dispatch_v1_dispatch_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_dispatch_v1_dispatch_proto_goTypes,
 		DependencyIndexes: file_dispatch_v1_dispatch_proto_depIdxs,
+		EnumInfos:         file_dispatch_v1_dispatch_proto_enumTypes,
 		MessageInfos:      file_dispatch_v1_dispatch_proto_msgTypes,
 	}.Build()
 	File_dispatch_v1_dispatch_proto = out.File

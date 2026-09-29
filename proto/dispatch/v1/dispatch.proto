@@ -2,14 +2,111 @@ syntax = "proto3";
 
 package dispatch.v1;
 
+import "common/v1/common.proto";
+
 option go_package = "github.com/keix40/omnifleet/gen/go/dispatch/v1;dispatchv1";
 
-// TODO: assign jobs to vehicles, optimize routes, dispatcher workflows.
 service DispatchService {
   rpc Health(HealthRequest) returns (HealthResponse);
+  rpc CreateJob(CreateJobRequest) returns (CreateJobResponse);
+  rpc GetJob(GetJobRequest) returns (GetJobResponse);
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  rpc AssignJob(AssignJobRequest) returns (AssignJobResponse);
+  rpc AutoAssignNearest(AutoAssignNearestRequest) returns (AutoAssignNearestResponse);
+  rpc UpdateJobStatus(UpdateJobStatusRequest) returns (UpdateJobStatusResponse);
 }
 
 message HealthRequest {}
 message HealthResponse {
   string status = 1;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_CREATED = 1;
+  JOB_STATUS_ASSIGNED = 2;
+  JOB_STATUS_EN_ROUTE = 3;
+  JOB_STATUS_PICKED_UP = 4;
+  JOB_STATUS_DELIVERED = 5;
+  JOB_STATUS_CANCELLED = 6;
+}
+
+message Job {
+  string id = 1;
+  string tenant_id = 2;
+  JobStatus status = 3;
+  common.v1.GeoPoint pickup = 4;
+  common.v1.GeoPoint dropoff = 5;
+  string pickup_label = 6;
+  string dropoff_label = 7;
+  string vehicle_id = 8;
+  string driver_id = 9;
+  int64 created_at_unix = 10;
+  int64 updated_at_unix = 11;
+}
+
+message CreateJobRequest {
+  string tenant_id = 1;
+  common.v1.GeoPoint pickup = 2;
+  common.v1.GeoPoint dropoff = 3;
+  string pickup_label = 4;
+  string dropoff_label = 5;
+  bool auto_assign = 6;
+}
+
+message CreateJobResponse {
+  Job job = 1;
+}
+
+message GetJobRequest {
+  string tenant_id = 1;
+  string job_id = 2;
+}
+
+message GetJobResponse {
+  Job job = 1;
+}
+
+message ListJobsRequest {
+  string tenant_id = 1;
+  string driver_id = 2;
+  JobStatus status_filter = 3;
+  common.v1.Pagination page = 4;
+}
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+  string next_page_token = 2;
+}
+
+message AssignJobRequest {
+  string tenant_id = 1;
+  string job_id = 2;
+  string vehicle_id = 3;
+  string driver_id = 4;
+}
+
+message AssignJobResponse {
+  Job job = 1;
+}
+
+message AutoAssignNearestRequest {
+  string tenant_id = 1;
+  string job_id = 2;
+}
+
+message AutoAssignNearestResponse {
+  Job job = 1;
+  string vehicle_id = 2;
+}
+
+message UpdateJobStatusRequest {
+  string tenant_id = 1;
+  string job_id = 2;
+  JobStatus status = 3;
+  string actor_user_id = 4;
+}
+
+message UpdateJobStatusResponse {
+  Job job = 1;
 }

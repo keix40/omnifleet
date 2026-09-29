@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Map, { Marker } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { PlatformPanels } from "./PlatformPanels";
 
 const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:8080";
 const wsBase = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080";
@@ -161,6 +162,7 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+          <PlatformPanels token={token} />
         </aside>
       </div>
     </main>

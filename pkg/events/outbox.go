@@ -9,18 +9,27 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// EnqueueAlert writes a geofence alert to the transactional outbox inside tx.
-func EnqueueAlert(ctx context.Context, tx pgx.Tx, alert AlertEvent) error {
-	payload, err := json.Marshal(alert)
+// EnqueueJSON writes an arbitrary payload to the outbox inside tx.
+func EnqueueJSON(ctx context.Context, tx pgx.Tx, tenantID, subject string, payload any) error {
+	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	subject := AlertSubject(alert.TenantID)
 	_, err = tx.Exec(ctx, `
 		INSERT INTO event_outbox (tenant_id, subject, payload)
 		VALUES ($1::uuid, $2, $3::jsonb)
-	`, alert.TenantID, subject, payload)
+	`, tenantID, subject, data)
 	return err
+}
+
+// EnqueueAlert writes a geofence alert to the transactional outbox inside tx.
+func EnqueueAlert(ctx context.Context, tx pgx.Tx, alert AlertEvent) error {
+	return EnqueueJSON(ctx, tx, alert.TenantID, AlertSubject(alert.TenantID), alert)
+}
+
+// EnqueueDispatch writes a dispatch lifecycle event to the outbox inside tx.
+func EnqueueDispatch(ctx context.Context, tx pgx.Tx, ev DispatchEvent) error {
+	return EnqueueJSON(ctx, tx, ev.TenantID, DispatchSubject(ev.TenantID), ev)
 }
 
 // RelayPending publishes unpublished outbox rows (call outside tenant-scoped transactions).
