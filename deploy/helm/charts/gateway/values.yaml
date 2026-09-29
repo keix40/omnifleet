@@ -13,6 +13,11 @@ secrets:
   natsUrl: nats://nats:4222
   authGrpcAddr: auth:50051
   trackingGrpcAddr: tracking:50052
+grpc:
+  eta: omnifleet-eta:50054
+  dispatch: omnifleet-dispatch:50055
+  billing: omnifleet-billing:50056
+  notifications: omnifleet-notifications:50057
 autoscaling:
   enabled: true
   minReplicas: 2
