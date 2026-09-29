@@ -15,11 +15,9 @@ services:
         value: "1"
       - key: NATS_EMBEDDED
         value: "1"
-      - key: OMNIFLEET_DEV_MODE
-        value: "0"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://omnifleet-dashboard.vercel.app,http://localhost:3000,http://127.0.0.1:3000"
       - key: DATABASE_URL
-        sync: false
-      - key: OMNIFLEET_APP_PASSWORD
         sync: false
       # Optional: set NATS_EMBEDDED=0 and provide external NATS (e.g. Synadia Cloud).
       - key: NATS_URL

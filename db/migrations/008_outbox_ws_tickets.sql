@@ -20,12 +20,25 @@ CREATE TABLE ws_ticket_redemptions (
 
 CREATE INDEX idx_ws_ticket_redemptions_expires ON ws_ticket_redemptions (expires_at);
 
-ALTER TABLE event_outbox OWNER TO omnifleet_owner;
-ALTER TABLE ws_ticket_redemptions OWNER TO omnifleet_owner;
-
--- Outbox is written under tenant RLS transactions but relayed cross-tenant by the geofencing worker.
-GRANT SELECT, INSERT, UPDATE, DELETE ON event_outbox TO omnifleet_app;
-GRANT SELECT, INSERT, DELETE ON ws_ticket_redemptions TO omnifleet_app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE omnifleet_owner IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO omnifleet_app;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        BEGIN
+            ALTER TABLE event_outbox OWNER TO omnifleet_owner;
+            ALTER TABLE ws_ticket_redemptions OWNER TO omnifleet_owner;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'omnifleet: outbox owner transfer skipped (%)', SQLERRM;
+        END;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        GRANT SELECT, INSERT, UPDATE, DELETE ON event_outbox TO omnifleet_app;
+        GRANT SELECT, INSERT, DELETE ON ws_ticket_redemptions TO omnifleet_app;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner')
+       AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        ALTER DEFAULT PRIVILEGES FOR ROLE omnifleet_owner IN SCHEMA public
+            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO omnifleet_app;
+    END IF;
+END
+$$;

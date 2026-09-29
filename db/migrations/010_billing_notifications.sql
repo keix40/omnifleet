@@ -91,32 +91,59 @@ CREATE POLICY tenant_isolation_notification_preferences ON notification_preferen
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
-ALTER TABLE billing_plans OWNER TO omnifleet_owner;
-ALTER TABLE billing_subscriptions OWNER TO omnifleet_owner;
-ALTER TABLE billing_usage_snapshots OWNER TO omnifleet_owner;
-ALTER TABLE stripe_webhook_events OWNER TO omnifleet_owner;
-ALTER TABLE notification_preferences OWNER TO omnifleet_owner;
-ALTER TABLE notification_deliveries OWNER TO omnifleet_owner;
-ALTER TABLE notification_dlq OWNER TO omnifleet_owner;
-
 ALTER TABLE billing_subscriptions FORCE ROW LEVEL SECURITY;
 ALTER TABLE billing_usage_snapshots FORCE ROW LEVEL SECURITY;
 ALTER TABLE notification_preferences FORCE ROW LEVEL SECURITY;
-GRANT SELECT ON billing_plans TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON billing_subscriptions TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON billing_usage_snapshots TO omnifleet_app;
-GRANT SELECT, INSERT ON stripe_webhook_events TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_preferences TO omnifleet_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_deliveries TO omnifleet_app;
-GRANT SELECT, INSERT ON notification_dlq TO omnifleet_app;
 
--- Default subscriptions for demo tenants.
-INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'growth', 'active'),
-    ('22222222-2222-2222-2222-222222222222', 'starter', 'active')
-ON CONFLICT (tenant_id) DO NOTHING;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        BEGIN
+            ALTER TABLE billing_plans OWNER TO omnifleet_owner;
+            ALTER TABLE billing_subscriptions OWNER TO omnifleet_owner;
+            ALTER TABLE billing_usage_snapshots OWNER TO omnifleet_owner;
+            ALTER TABLE stripe_webhook_events OWNER TO omnifleet_owner;
+            ALTER TABLE notification_preferences OWNER TO omnifleet_owner;
+            ALTER TABLE notification_deliveries OWNER TO omnifleet_owner;
+            ALTER TABLE notification_dlq OWNER TO omnifleet_owner;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'omnifleet: billing/notifications owner transfer skipped (%)', SQLERRM;
+        END;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        GRANT SELECT ON billing_plans TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON billing_subscriptions TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON billing_usage_snapshots TO omnifleet_app;
+        GRANT SELECT, INSERT ON stripe_webhook_events TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON notification_preferences TO omnifleet_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON notification_deliveries TO omnifleet_app;
+        GRANT SELECT, INSERT ON notification_dlq TO omnifleet_app;
+    END IF;
+END
+$$;
 
-INSERT INTO notification_preferences (tenant_id, channel) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'log'),
-    ('22222222-2222-2222-2222-222222222222', 'log')
-ON CONFLICT (tenant_id) DO NOTHING;
+-- Default subscriptions for demo tenants (tenant context + insert in one transaction).
+DO $$
+BEGIN
+    PERFORM set_config('app.tenant_id', '11111111-1111-1111-1111-111111111111', true);
+    INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
+        ('11111111-1111-1111-1111-111111111111', 'growth', 'active')
+    ON CONFLICT (tenant_id) DO NOTHING;
+
+    PERFORM set_config('app.tenant_id', '22222222-2222-2222-2222-222222222222', true);
+    INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
+        ('22222222-2222-2222-2222-222222222222', 'starter', 'active')
+    ON CONFLICT (tenant_id) DO NOTHING;
+
+    PERFORM set_config('app.tenant_id', '11111111-1111-1111-1111-111111111111', true);
+    INSERT INTO notification_preferences (tenant_id, channel) VALUES
+        ('11111111-1111-1111-1111-111111111111', 'log')
+    ON CONFLICT (tenant_id) DO NOTHING;
+
+    PERFORM set_config('app.tenant_id', '22222222-2222-2222-2222-222222222222', true);
+    INSERT INTO notification_preferences (tenant_id, channel) VALUES
+        ('22222222-2222-2222-2222-222222222222', 'log')
+    ON CONFLICT (tenant_id) DO NOTHING;
+END
+$$;
