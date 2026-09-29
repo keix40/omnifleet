@@ -79,10 +79,12 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 			_ = msg.Term()
 			return
 		}
-		if _, err := s.evaluateInternal(ctx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude); err != nil {
+		if eventsOut, err := s.evaluateInternal(ctx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude); err != nil {
 			log.Printf("geofence evaluate: %v", err)
 			_ = msg.Nak()
 			return
+		} else if len(eventsOut) > 0 {
+			log.Printf("geofence events: %+v", eventsOut)
 		}
 		_ = msg.Ack()
 	})

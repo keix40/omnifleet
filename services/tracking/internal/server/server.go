@@ -96,14 +96,25 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 	_ = s.publisher.PublishPosition(ctx, ev)
 
 	if s.geoClient != nil {
-		_, _ = s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
+		if geoResp, err := s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
 			TenantId:  req.TenantId,
 			VehicleId: req.VehicleId,
 			Point: &commonv1.GeoPoint{
 				Latitude:  req.Point.Latitude,
 				Longitude: req.Point.Longitude,
 			},
-		})
+		}); err == nil {
+			for _, e := range geoResp.Events {
+				_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
+					TenantID:     req.TenantId,
+					VehicleID:    req.VehicleId,
+					GeofenceID:   e.GeofenceId,
+					GeofenceName: e.GeofenceName,
+					EventType:    e.EventType,
+					Message:      "Geofence " + e.EventType + ": " + e.GeofenceName,
+				})
+			}
+		}
 	}
 
 	return &trackingv1.IngestPositionResponse{PositionId: positionID, Accepted: true}, nil
