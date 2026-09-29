@@ -98,33 +98,39 @@ func listenWS(t *testing.T, ticket string) (*websocket.Conn, chan json.RawMessag
 	return conn, ch
 }
 
-func postPositions(t *testing.T, driverToken string, steps int) {
+func postPositions(t *testing.T, driverToken string) {
 	t.Helper()
-	startLat, startLon := 37.7700, -122.4300
-	endLat, endLon := 37.7900, -122.4100
-	for i := 0; i <= steps; i++ {
-		p := float64(i) / float64(steps)
-		lat := startLat + (endLat-startLat)*p
-		lon := startLon + (endLon-startLon)*p
-		payload, _ := json.Marshal(map[string]any{
-			"vehicle_id":  "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-			"latitude":    lat,
-			"longitude":   lon,
-			"speed_mps":   8.0,
-			"heading_deg": 90.0,
-		})
-		req, _ := http.NewRequest(http.MethodPost, gatewayURL()+"/api/v1/tracking/positions", bytes.NewReader(payload))
-		req.Header.Set("Authorization", "Bearer "+driverToken)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatalf("ingest: %v", err)
+	// Route crosses Acme SF depot geofence (enter + exit) for alert events.
+	waypoints := []struct {
+		lat, lon float64
+		repeats  int
+	}{
+		{37.7720, -122.4250, 3}, // outside (south-west)
+		{37.7799, -122.4144, 5}, // inside depot
+		{37.7870, -122.4144, 5}, // outside (north)
+	}
+	for _, wp := range waypoints {
+		for i := 0; i < wp.repeats; i++ {
+			payload, _ := json.Marshal(map[string]any{
+				"vehicle_id":  "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+				"latitude":    wp.lat,
+				"longitude":   wp.lon,
+				"speed_mps":   8.0,
+				"heading_deg": 90.0,
+			})
+			req, _ := http.NewRequest(http.MethodPost, gatewayURL()+"/api/v1/tracking/positions", bytes.NewReader(payload))
+			req.Header.Set("Authorization", "Bearer "+driverToken)
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatalf("ingest: %v", err)
+			}
+			resp.Body.Close()
+			if resp.StatusCode >= 300 {
+				t.Fatalf("ingest status %d", resp.StatusCode)
+			}
+			time.Sleep(400 * time.Millisecond)
 		}
-		resp.Body.Close()
-		if resp.StatusCode >= 300 {
-			t.Fatalf("ingest status %d", resp.StatusCode)
-		}
-		time.Sleep(300 * time.Millisecond)
 	}
 }
 
