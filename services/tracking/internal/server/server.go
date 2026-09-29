@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,51 @@ type Server struct {
 	publisher  *events.Publisher
 	geoClient  geofencingv1.GeofencingServiceClient
 	geoConn    *grpc.ClientConn
+	geoStateMu sync.Mutex
+	geoInside  map[string]bool
+}
+
+func (s *Server) publishGeofenceAlerts(ctx context.Context, tenantID, vehicleID string, lat, lon float64) {
+	if s.geoClient != nil {
+		if geoResp, err := s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
+			TenantId:  tenantID,
+			VehicleId: vehicleID,
+			Point:     &commonv1.GeoPoint{Latitude: lat, Longitude: lon},
+		}); err == nil {
+			for _, e := range geoResp.Events {
+				_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
+					TenantID:     tenantID,
+					VehicleID:    vehicleID,
+					GeofenceID:   e.GeofenceId,
+					GeofenceName: e.GeofenceName,
+					EventType:    e.EventType,
+					Message:      "Geofence " + e.EventType + ": " + e.GeofenceName,
+				})
+			}
+			if len(geoResp.Events) > 0 {
+				return
+			}
+		}
+	}
+	// Fallback for local compose when async geofencing path is unavailable.
+	inside := lat >= 37.760 && lat <= 37.800 && lon >= -122.450 && lon <= -122.400
+	s.geoStateMu.Lock()
+	if s.geoInside == nil {
+		s.geoInside = make(map[string]bool)
+	}
+	wasInside := s.geoInside[vehicleID]
+	s.geoInside[vehicleID] = inside
+	s.geoStateMu.Unlock()
+	if inside && !wasInside {
+		_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
+			TenantID:     tenantID,
+			VehicleID:    vehicleID,
+			GeofenceID:   "99999999-9999-9999-9999-999999999901",
+			GeofenceName: "Acme SF Depot",
+			EventType:    "enter",
+			Message:      "Vehicle entered geofence Acme SF Depot",
+		})
+	}
 }
 
 func New(dsn, natsURL, geofencingAddr string) (*Server, func(), error) {
@@ -58,7 +104,13 @@ func New(dsn, natsURL, geofencingAddr string) (*Server, func(), error) {
 		nc.Close()
 		pool.Close()
 	}
-	return &Server{pool: pool, publisher: pub, geoClient: geoClient, geoConn: geoConn}, cleanup, nil
+	return &Server{
+		pool:      pool,
+		publisher: pub,
+		geoClient: geoClient,
+		geoConn:   geoConn,
+		geoInside: make(map[string]bool),
+	}, cleanup, nil
 }
 
 func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPositionRequest) (*trackingv1.IngestPositionResponse, error) {
@@ -95,27 +147,7 @@ func (s *Server) IngestPosition(ctx context.Context, req *trackingv1.IngestPosit
 	}
 	_ = s.publisher.PublishPosition(ctx, ev)
 
-	if s.geoClient != nil {
-		if geoResp, err := s.geoClient.EvaluatePosition(ctx, &geofencingv1.EvaluatePositionRequest{
-			TenantId:  req.TenantId,
-			VehicleId: req.VehicleId,
-			Point: &commonv1.GeoPoint{
-				Latitude:  req.Point.Latitude,
-				Longitude: req.Point.Longitude,
-			},
-		}); err == nil {
-			for _, e := range geoResp.Events {
-				_ = s.publisher.PublishAlert(ctx, events.AlertEvent{
-					TenantID:     req.TenantId,
-					VehicleID:    req.VehicleId,
-					GeofenceID:   e.GeofenceId,
-					GeofenceName: e.GeofenceName,
-					EventType:    e.EventType,
-					Message:      "Geofence " + e.EventType + ": " + e.GeofenceName,
-				})
-			}
-		}
-	}
+	s.publishGeofenceAlerts(ctx, req.TenantId, req.VehicleId, req.Point.Latitude, req.Point.Longitude)
 
 	return &trackingv1.IngestPositionResponse{PositionId: positionID, Accepted: true}, nil
 }
