@@ -63,14 +63,6 @@ ALTER TABLE gps_positions FORCE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
-        ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
-    END IF;
-END
-$$;
-
-DO $$
-BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
         GRANT USAGE ON SCHEMA public TO omnifleet_app;
         GRANT USAGE ON TYPE user_role TO omnifleet_app;
