@@ -2,19 +2,23 @@
 
 DO $$
 BEGIN
-    ALTER TABLE vehicles
-        ADD CONSTRAINT vehicles_tenant_id_id_key UNIQUE (tenant_id, id);
-EXCEPTION
-    WHEN duplicate_object THEN NULL;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_tenant_id_id_key'
+    ) THEN
+        ALTER TABLE vehicles
+            ADD CONSTRAINT vehicles_tenant_id_id_key UNIQUE (tenant_id, id);
+    END IF;
 END
 $$;
 
 DO $$
 BEGIN
-    ALTER TABLE geofences
-        ADD CONSTRAINT geofences_tenant_id_id_key UNIQUE (tenant_id, id);
-EXCEPTION
-    WHEN duplicate_object THEN NULL;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'geofences_tenant_id_id_key'
+    ) THEN
+        ALTER TABLE geofences
+            ADD CONSTRAINT geofences_tenant_id_id_key UNIQUE (tenant_id, id);
+    END IF;
 END
 $$;
 
