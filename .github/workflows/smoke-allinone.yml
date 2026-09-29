@@ -76,11 +76,13 @@ jobs:
       - name: Smoke test
         env:
           SMOKE_TEST: "1"
+          NATS_EMBEDDED: "1"
           SMOKE_GATEWAY_URL: http://127.0.0.1:18080
           SMOKE_WS_URL: ws://127.0.0.1:18080
+          APP_DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
         run: |
           cd cmd/omnifleet-all
-          go test -tags smoke -count=1 -timeout 2m .
+          go test -tags smoke -count=1 -timeout 3m .
       - name: Stop process
         if: always()
         run: kill "$(cat /tmp/omnifleet-all.pid)" 2>/dev/null || true

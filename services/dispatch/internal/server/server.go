@@ -39,7 +39,9 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 		return nil, func() {}, err
 	}
 	s := &Server{pool: pool, publisher: pub}
-	go s.RunOutboxRelay(ctx)
+	if !events.SecondaryOutboxRelayDisabled() {
+		go s.RunOutboxRelay(ctx)
+	}
 	cleanup := func() {
 		events.ReleaseNATS(nc)
 		pool.Close()
