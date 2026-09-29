@@ -36,6 +36,10 @@ func TestRelayPending_ConcurrentRelaysPublishOnce(t *testing.T) {
 	}
 	defer pool.Close()
 
+	if _, err := pool.Exec(ctx, `DELETE FROM event_outbox`); err != nil {
+		t.Fatal(err)
+	}
+
 	tenant := "11111111-1111-1111-1111-111111111111"
 	alert := events.AlertEvent{
 		TenantID:     tenant,
