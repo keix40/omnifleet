@@ -38,19 +38,19 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 		return nil, func() {}, err
 	}
 	if err := pub.EnsureStream(ctx); err != nil {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 		return nil, func() {}, err
 	}
 	js, err := jetstream.New(nc)
 	if err != nil {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 		return nil, func() {}, err
 	}
 	s := &Server{pool: pool, publisher: pub, nc: nc, js: js}
 	cleanup := func() {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 	}
 	return s, cleanup, nil

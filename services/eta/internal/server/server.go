@@ -40,7 +40,7 @@ func New(ctx context.Context, dsn, natsURL, osrmURL string) (*Server, func(), er
 		return nil, func() {}, err
 	}
 	cleanup := func() {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 	}
 	return &Server{

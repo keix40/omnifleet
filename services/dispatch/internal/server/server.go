@@ -41,7 +41,7 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 	s := &Server{pool: pool, publisher: pub}
 	go s.RunOutboxRelay(ctx)
 	cleanup := func() {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 	}
 	return s, cleanup, nil

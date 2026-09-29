@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -14,7 +15,10 @@ type Publisher struct {
 }
 
 func ConnectPublisher(natsURL string) (*Publisher, *nats.Conn, error) {
-	nc, err := nats.Connect(natsURL)
+	if natsURL != "" && os.Getenv("NATS_URL") == "" {
+		_ = os.Setenv("NATS_URL", natsURL)
+	}
+	nc, err := ConnectNATSFromEnv()
 	if err != nil {
 		return nil, nil, err
 	}

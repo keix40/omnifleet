@@ -1,0 +1,35 @@
+# Render Blueprint — free-tier API (single web service, Singapore).
+# Dashboard: deploy web/dashboard separately on Vercel (see README).
+services:
+  - type: web
+    name: omnifleet-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: OMNIFLEET_SHARED_NATS
+        value: "1"
+      - key: OMNIFLEET_DEV_MODE
+        value: "0"
+      - key: DATABASE_URL
+        sync: false
+      - key: OMNIFLEET_APP_PASSWORD
+        sync: false
+      - key: NATS_URL
+        sync: false
+      - key: NATS_CREDS
+        sync: false
+      - key: NATS_TLS
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ISSUER
+        value: omnifleet
+      - key: JWT_AUDIENCE
+        value: omnifleet-api
+      - key: STRIPE_PROVIDER
+        value: fake

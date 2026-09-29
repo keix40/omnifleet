@@ -33,12 +33,12 @@ func New(dsn, natsURL string) (*Server, func(), error) {
 		return nil, func() {}, err
 	}
 	if err := pub.EnsureStream(context.Background()); err != nil {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 		return nil, func() {}, err
 	}
 	cleanup := func() {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 	}
 	return &Server{pool: pool, publisher: pub}, cleanup, nil

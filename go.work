@@ -1,6 +1,7 @@
 go 1.22
 
 use (
+	./cmd/omnifleet-all
 	./pkg
 	./services/auth
 	./services/billing

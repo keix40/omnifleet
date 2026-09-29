@@ -101,7 +101,10 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		authConn.Close()
 		return nil, func() {}, err
 	}
-	nc, err := nats.Connect(cfg.NatsURL)
+	if cfg.NatsURL != "" && os.Getenv("NATS_URL") == "" {
+		_ = os.Setenv("NATS_URL", cfg.NatsURL)
+	}
+	nc, err := events.ConnectNATSFromEnv()
 	if err != nil {
 		notifConn.Close()
 		billingConn.Close()
@@ -165,7 +168,7 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		if dbPool != nil {
 			dbPool.Close()
 		}
-		nc.Close()
+		events.ReleaseNATS(nc)
 		notifConn.Close()
 		billingConn.Close()
 		dispatchConn.Close()

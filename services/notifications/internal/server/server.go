@@ -14,8 +14,8 @@ import (
 	"github.com/keix40/omnifleet/services/notifications/internal/channels"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"os"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -31,14 +31,17 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 	if err != nil {
 		return nil, func() {}, err
 	}
-	nc, err := nats.Connect(natsURL)
+	if natsURL != "" && os.Getenv("NATS_URL") == "" {
+		_ = os.Setenv("NATS_URL", natsURL)
+	}
+	nc, err := events.ConnectNATSFromEnv()
 	if err != nil {
 		pool.Close()
 		return nil, func() {}, err
 	}
 	js, err := jetstream.New(nc)
 	if err != nil {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 		return nil, func() {}, err
 	}
@@ -49,7 +52,7 @@ func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
 	go s.RunConsumer(context.Background())
 	go s.RunRetryWorker(context.Background())
 	cleanup := func() {
-		nc.Close()
+		events.ReleaseNATS(nc)
 		pool.Close()
 	}
 	return s, cleanup, nil

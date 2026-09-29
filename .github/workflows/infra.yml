@@ -5,6 +5,8 @@ on:
     paths:
       - "deploy/terraform/**"
       - "deploy/helm/**"
+      - "Dockerfile.render"
+      - "render.yaml"
       - ".github/workflows/infra.yml"
   push:
     branches: [main]

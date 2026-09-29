@@ -6,6 +6,7 @@ type Requirements struct {
 	Web   bool
 	Infra bool
 	E2E   bool
+	Smoke bool
 }
 
 // ClassifyChangedFiles maps changed paths to required workflow groups.
@@ -24,15 +25,31 @@ func ClassifyChangedFiles(paths []string) Requirements {
 		if matchE2E(f) {
 			req.E2E = true
 		}
+		if matchSmoke(f) {
+			req.Smoke = true
+		}
 	}
 	return req
+}
+
+func matchSmoke(f string) bool {
+	switch {
+	case hasPrefix(f, "cmd/omnifleet-all/"), hasPrefix(f, "services/"), hasPrefix(f, "pkg/"), hasPrefix(f, "db/"):
+		return true
+	case f == "scripts/bootstrap-db.sh", f == "scripts/bootstrap-neon.sh", f == ".github/workflows/smoke-allinone.yml":
+		return true
+	default:
+		return false
+	}
 }
 
 func matchGo(f string) bool {
 	switch {
 	case hasPrefix(f, "pkg/"), hasPrefix(f, "gen/"), hasPrefix(f, "proto/"), hasPrefix(f, "services/"), hasPrefix(f, "db/"):
 		return true
-	case f == "go.work", f == "scripts/bootstrap-db.sh", f == ".github/workflows/go-services.yml":
+	case f == "go.work", f == "scripts/bootstrap-db.sh", f == "scripts/bootstrap-neon.sh", f == ".github/workflows/go-services.yml":
+		return true
+	case hasPrefix(f, "cmd/omnifleet-all/"):
 		return true
 	default:
 		return false
@@ -47,7 +64,7 @@ func matchWeb(f string) bool {
 }
 
 func matchInfra(f string) bool {
-	return hasPrefix(f, "deploy/terraform/") || hasPrefix(f, "deploy/helm/") || f == ".github/workflows/infra.yml"
+	return hasPrefix(f, "deploy/terraform/") || hasPrefix(f, "deploy/helm/") || f == "Dockerfile.render" || f == "render.yaml" || f == ".github/workflows/infra.yml"
 }
 
 func matchE2E(f string) bool {
