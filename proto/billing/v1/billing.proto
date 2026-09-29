@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package billing.v1;
+
+option go_package = "github.com/keix40/omnifleet/gen/go/billing/v1;billingv1";
+
+// TODO: Stripe subscriptions, webhook ingestion, plan enforcement.
+service BillingService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+}

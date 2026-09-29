@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package dispatch.v1;
+
+option go_package = "github.com/keix40/omnifleet/gen/go/dispatch/v1;dispatchv1";
+
+// TODO: assign jobs to vehicles, optimize routes, dispatcher workflows.
+service DispatchService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+}

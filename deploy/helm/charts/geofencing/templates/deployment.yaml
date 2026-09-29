@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omnifleet-geofencing
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: geofencing
+  template:
+    metadata:
+      labels:
+        app: geofencing
+    spec:
+      containers:
+        - name: geofencing
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 50053
+          livenessProbe:
+            grpc:
+              port: 50053
+          readinessProbe:
+            grpc:
+              port: 50053

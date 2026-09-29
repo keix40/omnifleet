@@ -1,0 +1,41 @@
+name: Infrastructure
+
+on:
+  pull_request:
+    paths:
+      - "deploy/terraform/**"
+      - "deploy/helm/**"
+      - ".github/workflows/infra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deploy/terraform/**"
+      - "deploy/helm/**"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Terraform fmt check
+        working-directory: deploy/terraform
+        run: terraform fmt -check -recursive
+      - name: Terraform init, validate, plan
+        working-directory: deploy/terraform
+        run: |
+          terraform init -backend=false
+          terraform validate
+          terraform plan -input=false
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Helm lint charts
+        run: |
+          helm lint deploy/helm/omnifleet
+          for chart in gateway auth tracking geofencing; do
+            helm lint deploy/helm/charts/$chart
+          done

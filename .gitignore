@@ -1,0 +1,11 @@
+.env
+bin/
+*.exe
+.DS_Store
+node_modules/
+web/dashboard/.next/
+web/dashboard/node_modules/
+.terraform/
+*.tfstate*
+.idea/
+.vscode/

@@ -1,0 +1,74 @@
+name: Go Services
+
+on:
+  pull_request:
+    paths:
+      - "pkg/**"
+      - "gen/**"
+      - "proto/**"
+      - "services/**"
+      - "db/**"
+      - "go.work"
+      - ".github/workflows/go-services.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pkg/**"
+      - "gen/**"
+      - "proto/**"
+      - "services/**"
+      - "db/**"
+      - "go.work"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: omnifleet
+          POSTGRES_PASSWORD: omnifleet
+          POSTGRES_DB: omnifleet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U omnifleet -d omnifleet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Install buf
+        run: |
+          curl -sSL "https://github.com/bufbuild/buf/releases/download/v1.47.2/buf-Linux-x86_64" -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
+      - name: Buf generate
+        run: buf generate
+      - name: Bootstrap database
+        env:
+          PGPASSWORD: omnifleet
+        run: |
+          chmod +x db/docker-init.sh
+          dockerize() { psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f "$1"; }
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/001_init.sql
+          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/002_timescale.sql
+          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/003_auth_lookup.sql
+          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/seed/001_demo_tenants.sql
+      - name: Unit tests
+        run: |
+          cd pkg && go test ./...
+      - name: RLS integration test
+        env:
+          DATABASE_URL: postgres://omnifleet:omnifleet@localhost:5432/omnifleet?sslmode=disable
+        run: |
+          cd pkg && go test ./db -run TestRLS -count=1
+      - name: Build changed services
+        run: |
+          for svc in auth gateway tracking geofencing eta dispatch billing notifications; do
+            cd services/$svc && go build ./... && cd -
+          done
