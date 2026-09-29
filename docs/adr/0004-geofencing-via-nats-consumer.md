@@ -32,3 +32,4 @@ The geofencing gRPC `EvaluatePosition` RPC remains for health checks, manual deb
 - Geofencing must keep its consumer alive for the process lifetime (hold `ConsumeContext`, stop on shutdown).
 - Alert publishes happen after the tenant transaction commits so WebSocket clients never see events for rolled-back state.
 - Compose and Kubernetes deploy geofencing with `NATS_URL`; tracking does not need `GEOFENCING_GRPC_ADDR`.
+- Geofence evaluation must finish reading the geofence `rows` cursor before running follow-up queries on the same pgx transaction (otherwise pgx returns `conn busy` and alerts never publish).
