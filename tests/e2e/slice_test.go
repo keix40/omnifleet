@@ -168,7 +168,7 @@ func TestVerticalSlice_TenantScopedWebSocket(t *testing.T) {
 			if bytes.Contains(msg, []byte(`"latitude"`)) {
 				acmePositions++
 			}
-			if bytes.Contains(msg, []byte(`"event_type"`)) {
+			if bytes.Contains(msg, []byte(`"event_type"`)) || bytes.Contains(msg, []byte(`"geofence_name"`)) {
 				acmeAlerts++
 			}
 		case msg := <-globexCh:
