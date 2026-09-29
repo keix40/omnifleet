@@ -67,7 +67,13 @@ BEGIN
         GRANT USAGE ON SCHEMA public TO omnifleet_app;
         GRANT USAGE ON TYPE user_role TO omnifleet_app;
         GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO omnifleet_app;
-        GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT) TO omnifleet_app;
+        IF EXISTS (
+            SELECT 1 FROM pg_proc p
+            JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'auth_lookup_user'
+        ) THEN
+            GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT, TEXT) TO omnifleet_app;
+        END IF;
     END IF;
 END
 $$;
