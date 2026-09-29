@@ -42,7 +42,7 @@ func login(t *testing.T, email, password string) string {
 		t.Fatalf("login %s failed: %s", email, string(data))
 	}
 	var out struct {
-		AccessToken string `json:"accessToken"`
+		AccessToken string `json:"access_token"`
 	}
 	if err := json.Unmarshal(data, &out); err != nil || out.AccessToken == "" {
 		t.Fatalf("parse login: %s", string(data))

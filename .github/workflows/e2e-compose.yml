@@ -35,7 +35,7 @@ jobs:
             if curl -sf http://localhost:8080/healthz >/dev/null && \
               curl -sf -X POST http://localhost:8080/api/v1/auth/login \
                 -H "Content-Type: application/json" \
-                -d '{"email":"dispatcher@acme.test","password":"demo-password-change-me"}' | grep -q accessToken; then
+                -d '{"email":"dispatcher@acme.test","password":"demo-password-change-me"}' | grep -q access_token; then
               exit 0
             fi
             sleep 3

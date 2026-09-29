@@ -46,7 +46,7 @@ func login(base, email, password string) string {
 		panic(fmt.Sprintf("login failed: %s", string(data)))
 	}
 	var out struct {
-		AccessToken string `json:"accessToken"`
+		AccessToken string `json:"access_token"`
 	}
 	_ = json.Unmarshal(data, &out)
 	if out.AccessToken == "" {

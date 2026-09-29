@@ -44,7 +44,7 @@ export default function HomePage() {
       return;
     }
     const data = await resp.json();
-    setToken(data.accessToken);
+    setToken(data.access_token ?? data.accessToken);
   };
 
   useEffect(() => {
