@@ -123,13 +123,23 @@ BEGIN
 END
 $$;
 
--- Default subscriptions for demo tenants.
+-- Default subscriptions for demo tenants (set tenant context for FORCE RLS).
+SELECT set_config('app.tenant_id', '11111111-1111-1111-1111-111111111111', true);
 INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'growth', 'active'),
+    ('11111111-1111-1111-1111-111111111111', 'growth', 'active')
+ON CONFLICT (tenant_id) DO NOTHING;
+
+SELECT set_config('app.tenant_id', '22222222-2222-2222-2222-222222222222', true);
+INSERT INTO billing_subscriptions (tenant_id, plan_id, status) VALUES
     ('22222222-2222-2222-2222-222222222222', 'starter', 'active')
 ON CONFLICT (tenant_id) DO NOTHING;
 
+SELECT set_config('app.tenant_id', '11111111-1111-1111-1111-111111111111', true);
 INSERT INTO notification_preferences (tenant_id, channel) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'log'),
+    ('11111111-1111-1111-1111-111111111111', 'log')
+ON CONFLICT (tenant_id) DO NOTHING;
+
+SELECT set_config('app.tenant_id', '22222222-2222-2222-2222-222222222222', true);
+INSERT INTO notification_preferences (tenant_id, channel) VALUES
     ('22222222-2222-2222-2222-222222222222', 'log')
 ON CONFLICT (tenant_id) DO NOTHING;
