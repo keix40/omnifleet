@@ -111,7 +111,7 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 	err := db.WithTenant(ctx, s.pool, tenantID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT g.id::text, g.name,
-			       ST_Contains(g.boundary::geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326)) AS inside
+			       ST_Covers(g.boundary, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS inside
 			FROM geofences g
 		`, lon, lat)
 		if err != nil {

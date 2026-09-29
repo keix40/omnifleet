@@ -51,11 +51,15 @@ flowchart LR
 
 - **Shared database** with `tenant_id` on all tenant-owned rows.
 - **Postgres RLS** policies enforce `tenant_id = current_setting('app.tenant_id')`.
+- **`FORCE ROW LEVEL SECURITY`** on tenant tables; tables are owned by `omnifleet_owner`, not the app role.
+- **Runtime DB user** `omnifleet_app` (non-superuser) is what services use in docker-compose and tests.
+- Without `app.tenant_id`, queries return **zero rows** (not all rows).
 - Application code sets tenant context per transaction via `pkg/db.WithTenant`.
 - **JWT** claims carry `tenant_id`, `user_id`, and **RBAC role** (`admin`, `dispatcher`, `driver`, `customer`).
 - Gateway checks permissions before ingest/view operations.
 - Login uses `auth_lookup_user()` (`SECURITY DEFINER`) because tenant context is unknown pre-auth.
-- Integration test `TestRLS_TenantIsolation` proves cross-tenant reads fail.
+- **Live map WebSocket:** clients `POST /api/v1/ws/fleet/ticket` with `Authorization: Bearer`, receive a **single-use ~30s ticket**, then connect with `Sec-WebSocket-Protocol: omnifleet.v1.<ticket>` — JWTs are not placed in query strings or access logs.
+- Integration tests in `pkg/db/rls_test.go` cover tenant isolation, empty results without tenant context, and FORCE RLS / non-owner role.
 
 ## Event flow (vertical slice)
 

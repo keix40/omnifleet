@@ -21,4 +21,4 @@ Expose **REST/JSON** and **WebSocket** on the gateway; keep gRPC east-west betwe
 ## Consequences
 
 - Gateway validates JWT locally (shared secret with auth service in dev; mTLS + JWKS later).
-- Browser WebSocket uses `/api/v1/ws/fleet/live?access_token=` query parameter (header-less fallback).
+- Browser WebSocket uses a **single-use ticket** from `POST /api/v1/ws/fleet/ticket`, passed via `Sec-WebSocket-Protocol: omnifleet.v1.<ticket>` on `GET /api/v1/ws/fleet/live` (avoids JWT leakage in URLs and proxy logs).

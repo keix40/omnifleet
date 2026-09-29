@@ -31,7 +31,7 @@ services:
       args:
         SERVICE: auth
     environment:
-      DATABASE_URL: postgres://omnifleet:omnifleet@postgres:5432/omnifleet?sslmode=disable
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
       JWT_SECRET: dev-only-change-me
       AUTH_GRPC_ADDR: ":50051"
     depends_on:
@@ -47,7 +47,7 @@ services:
       args:
         SERVICE: tracking
     environment:
-      DATABASE_URL: postgres://omnifleet:omnifleet@postgres:5432/omnifleet?sslmode=disable
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
       NATS_URL: nats://nats:4222
       TRACKING_GRPC_ADDR: ":50052"
     depends_on:
@@ -65,7 +65,7 @@ services:
       args:
         SERVICE: geofencing
     environment:
-      DATABASE_URL: postgres://omnifleet:omnifleet@postgres:5432/omnifleet?sslmode=disable
+      DATABASE_URL: postgres://omnifleet_app:omnifleet_app@postgres:5432/omnifleet?sslmode=disable
       NATS_URL: nats://nats:4222
       GEOFENCING_GRPC_ADDR: ":50053"
     depends_on:

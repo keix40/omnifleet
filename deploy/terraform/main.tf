@@ -20,10 +20,10 @@ provider "aws" {
 }
 
 module "network" {
-  source               = "./modules/network"
-  project              = var.project
-  vpc_cidr             = var.vpc_cidr
-  availability_zones   = var.availability_zones
+  source             = "./modules/network"
+  project            = var.project
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
 }
 
 module "eks" {

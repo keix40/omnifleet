@@ -49,19 +49,33 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!token) return;
-    const ws = new WebSocket(
-      `${wsBase}/api/v1/ws/fleet/live?access_token=${encodeURIComponent(token)}`
-    );
-    ws.onmessage = (msg) => {
-      try {
-        const payload = JSON.parse(msg.data);
-        if (payload.latitude !== undefined) setPosition(payload as PositionEvent);
-        if (payload.event_type) setAlerts((p) => [payload as AlertEvent, ...p].slice(0, 8));
-      } catch {
-        /* ignore */
-      }
+    let ws: WebSocket | null = null;
+    let cancelled = false;
+
+    (async () => {
+      const ticketResp = await fetch(`${gateway}/api/v1/ws/fleet/ticket`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!ticketResp.ok || cancelled) return;
+      const ticketData = await ticketResp.json();
+      const subprotocol = `omnifleet.v1.${ticketData.ticket}`;
+      ws = new WebSocket(`${wsBase}/api/v1/ws/fleet/live`, [subprotocol]);
+      ws.onmessage = (msg) => {
+        try {
+          const payload = JSON.parse(msg.data);
+          if (payload.latitude !== undefined) setPosition(payload as PositionEvent);
+          if (payload.event_type) setAlerts((p) => [payload as AlertEvent, ...p].slice(0, 8));
+        } catch {
+          /* ignore */
+        }
+      };
+    })();
+
+    return () => {
+      cancelled = true;
+      ws?.close();
     };
-    return () => ws.close();
   }, [token]);
 
   const viewState = useMemo(

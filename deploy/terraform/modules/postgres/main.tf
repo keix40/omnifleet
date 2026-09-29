@@ -24,17 +24,17 @@ resource "aws_db_subnet_group" "this" {
 }
 
 resource "aws_rds_cluster" "this" {
-  cluster_identifier = "${var.project}-aurora"
-  engine             = "aurora-postgresql"
-  engine_mode        = "provisioned"
-  engine_version     = "16.1"
-  database_name      = "omnifleet"
-  master_username    = "omnifleet"
+  cluster_identifier          = "${var.project}-aurora"
+  engine                      = "aurora-postgresql"
+  engine_mode                 = "provisioned"
+  engine_version              = "16.1"
+  database_name               = "omnifleet"
+  master_username             = "omnifleet"
   manage_master_user_password = true
-  db_subnet_group_name   = aws_db_subnet_group.this.name
-  vpc_security_group_ids = [aws_security_group.postgres.id]
-  storage_encrypted      = true
-  backup_retention_period = 7
+  db_subnet_group_name        = aws_db_subnet_group.this.name
+  vpc_security_group_ids      = [aws_security_group.postgres.id]
+  storage_encrypted           = true
+  backup_retention_period     = 7
 }
 
 resource "aws_rds_cluster_instance" "primary" {

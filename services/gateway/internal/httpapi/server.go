@@ -30,10 +30,13 @@ type Config struct {
 	JWTSecret    string
 }
 
+const wsTicketSubprotocolPrefix = "omnifleet.v1."
+
 type Server struct {
 	authClient     authv1.AuthServiceClient
 	trackingClient trackingv1.TrackingServiceClient
 	tokens         *auth.TokenIssuer
+	wsTickets      *auth.WSTicketStore
 	hub            *wsHub
 	nc             *nats.Conn
 }
@@ -66,6 +69,7 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		authClient:     authv1.NewAuthServiceClient(authConn),
 		trackingClient: trackingv1.NewTrackingServiceClient(trackConn),
 		tokens:         auth.NewTokenIssuer(cfg.JWTSecret, 24*time.Hour, "omnifleet-gateway"),
+		wsTickets:      auth.NewWSTicketStore(30 * time.Second),
 		hub:            hub,
 		nc:             nc,
 	}
@@ -101,10 +105,11 @@ func (s *Server) Router() http.Handler {
 	r.Group(func(protected chi.Router) {
 		protected.Use(s.authMiddleware)
 		protected.Post("/api/v1/tracking/positions", s.handleIngestPosition)
+		protected.Post("/api/v1/ws/fleet/ticket", s.handleWSTicket)
 		protected.Get("/api/v1/ws/fleet", s.handleWebSocket)
 	})
-	// Browser WebSocket clients cannot set Authorization headers reliably.
-	r.Get("/api/v1/ws/fleet/live", s.handleWebSocketQueryToken)
+	// Browser WebSocket: short-lived ticket via Sec-WebSocket-Protocol (see README security model).
+	r.Get("/api/v1/ws/fleet/live", s.handleWebSocketLive)
 	return r
 }
 
@@ -172,31 +177,60 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+func (s *Server) handleWSTicket(w http.ResponseWriter, r *http.Request) {
+	claims := claimsFromContext(r.Context())
+	if !auth.HasPermission(claims.Role, auth.PermViewFleet) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	ticket, exp, err := s.wsTickets.Issue(claims)
+	if err != nil {
+		http.Error(w, "ticket issue failed", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, map[string]any{
+		"ticket":     ticket,
+		"expiresIn":  int(time.Until(exp).Seconds()),
+		"protocol":   "omnifleet.v1",
+		"wsPath":     "/api/v1/ws/fleet/live",
+	})
+}
+
+func (s *Server) handleWebSocketLive(w http.ResponseWriter, r *http.Request) {
+	var ticketID, selectedProtocol string
+	for _, p := range strings.Split(r.Header.Get("Sec-WebSocket-Protocol"), ",") {
+		p = strings.TrimSpace(p)
+		if strings.HasPrefix(p, wsTicketSubprotocolPrefix) {
+			ticketID = strings.TrimPrefix(p, wsTicketSubprotocolPrefix)
+			selectedProtocol = p
+			break
+		}
+	}
+	if ticketID == "" {
+		http.Error(w, "missing omnifleet.v1.<ticket> subprotocol", http.StatusUnauthorized)
+		return
+	}
+	claims, ok := s.wsTickets.Redeem(ticketID)
+	if !ok {
+		http.Error(w, "invalid or expired ticket", http.StatusUnauthorized)
+		return
+	}
+	header := http.Header{}
+	header.Set("Sec-WebSocket-Protocol", selectedProtocol)
+	s.serveWebSocket(w, r, claims, header)
+}
+
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	claims := claimsFromContext(r.Context())
-	s.serveWebSocket(w, r, claims)
+	s.serveWebSocket(w, r, claims, nil)
 }
 
-func (s *Server) handleWebSocketQueryToken(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Query().Get("access_token")
-	if token == "" {
-		http.Error(w, "missing access_token", http.StatusUnauthorized)
-		return
-	}
-	claims, err := s.tokens.Parse(token)
-	if err != nil {
-		http.Error(w, "invalid token", http.StatusUnauthorized)
-		return
-	}
-	s.serveWebSocket(w, r, claims)
-}
-
-func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request, claims *auth.Claims) {
+func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request, claims *auth.Claims, responseHeader http.Header) {
 	if claims == nil || !auth.HasPermission(claims.Role, auth.PermViewFleet) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
 		return
 	}

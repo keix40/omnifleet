@@ -9,6 +9,7 @@ on:
       - "services/**"
       - "db/**"
       - "go.work"
+      - "scripts/bootstrap-db.sh"
       - ".github/workflows/go-services.yml"
   push:
     branches: [main]
@@ -19,10 +20,13 @@ on:
       - "services/**"
       - "db/**"
       - "go.work"
+      - "scripts/bootstrap-db.sh"
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CI: "true"
     services:
       postgres:
         image: timescale/timescaledb-ha:pg16
@@ -51,24 +55,21 @@ jobs:
       - name: Bootstrap database
         env:
           PGPASSWORD: omnifleet
+          PGHOST: localhost
+          PGUSER: omnifleet
+          PGDATABASE: omnifleet
         run: |
-          chmod +x db/docker-init.sh
-          dockerize() { psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f "$1"; }
           sudo apt-get update && sudo apt-get install -y postgresql-client
-          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/001_init.sql
-          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/002_timescale.sql
-          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/migrations/003_auth_lookup.sql
-          psql -h localhost -U omnifleet -d omnifleet -v ON_ERROR_STOP=1 -f db/seed/001_demo_tenants.sql
+          chmod +x scripts/bootstrap-db.sh
+          ./scripts/bootstrap-db.sh
       - name: Unit tests
-        run: |
-          cd pkg && go test ./...
-      - name: RLS integration test
+        run: cd pkg && go test ./...
+      - name: RLS integration tests (omnifleet_app role)
         env:
-          DATABASE_URL: postgres://omnifleet:omnifleet@localhost:5432/omnifleet?sslmode=disable
-        run: |
-          cd pkg && go test ./db -run TestRLS -count=1
-      - name: Build changed services
+          APP_DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
+        run: cd pkg && go test ./db -run TestRLS -count=1
+      - name: Build services
         run: |
           for svc in auth gateway tracking geofencing eta dispatch billing notifications; do
-            cd services/$svc && go build ./... && cd -
+            (cd services/$svc && go build ./...)
           done

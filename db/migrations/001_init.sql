@@ -48,7 +48,7 @@ CREATE TABLE vehicle_geofence_state (
 );
 
 CREATE TABLE gps_positions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID NOT NULL DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     vehicle_id UUID NOT NULL REFERENCES vehicles (id) ON DELETE CASCADE,
     driver_id UUID REFERENCES users (id),
@@ -56,7 +56,8 @@ CREATE TABLE gps_positions (
     speed_mps DOUBLE PRECISION,
     heading_deg DOUBLE PRECISION,
     recorded_at TIMESTAMPTZ NOT NULL,
-    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    ingested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (recorded_at, id)
 );
 
 CREATE INDEX idx_gps_positions_tenant_vehicle_time
