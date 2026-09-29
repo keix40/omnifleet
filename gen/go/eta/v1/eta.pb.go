@@ -175,7 +175,7 @@ type ComputeETAResponse struct {
 	VehicleId       string                 `protobuf:"bytes,1,opt,name=vehicle_id,json=vehicleId,proto3" json:"vehicle_id,omitempty"`
 	DistanceMeters  float64                `protobuf:"fixed64,2,opt,name=distance_meters,json=distanceMeters,proto3" json:"distance_meters,omitempty"`
 	DurationSeconds float64                `protobuf:"fixed64,3,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
-	EtaUnix         float64                `protobuf:"fixed64,4,opt,name=eta_unix,json=etaUnix,proto3" json:"eta_unix,omitempty"`
+	EtaUnix         int64                  `protobuf:"varint,4,opt,name=eta_unix,json=etaUnix,proto3" json:"eta_unix,omitempty"`
 	RoutingProvider string                 `protobuf:"bytes,5,opt,name=routing_provider,json=routingProvider,proto3" json:"routing_provider,omitempty"`
 	Origin          *v1.GeoPoint           `protobuf:"bytes,6,opt,name=origin,proto3" json:"origin,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -233,7 +233,7 @@ func (x *ComputeETAResponse) GetDurationSeconds() float64 {
 	return 0
 }
 
-func (x *ComputeETAResponse) GetEtaUnix() float64 {
+func (x *ComputeETAResponse) GetEtaUnix() int64 {
 	if x != nil {
 		return x.EtaUnix
 	}
@@ -273,7 +273,7 @@ const file_eta_v1_eta_proto_rawDesc = "" +
 	"vehicle_id\x18\x01 \x01(\tR\tvehicleId\x12'\n" +
 	"\x0fdistance_meters\x18\x02 \x01(\x01R\x0edistanceMeters\x12)\n" +
 	"\x10duration_seconds\x18\x03 \x01(\x01R\x0fdurationSeconds\x12\x19\n" +
-	"\beta_unix\x18\x04 \x01(\x01R\aetaUnix\x12)\n" +
+	"\beta_unix\x18\x04 \x01(\x03R\aetaUnix\x12)\n" +
 	"\x10routing_provider\x18\x05 \x01(\tR\x0froutingProvider\x12+\n" +
 	"\x06origin\x18\x06 \x01(\v2\x13.common.v1.GeoPointR\x06origin2\x8a\x01\n" +
 	"\n" +

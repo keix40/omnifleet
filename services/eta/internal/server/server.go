@@ -99,7 +99,7 @@ func (s *Server) ComputeETA(ctx context.Context, req *etav1.ComputeETARequest) (
 		VehicleId:       req.VehicleId,
 		DistanceMeters:  res.DistanceMeters,
 		DurationSeconds: res.DurationSeconds,
-		EtaUnix:         float64(etaUnix),
+		EtaUnix:         etaUnix,
 		RoutingProvider: res.Provider,
 		Origin:          &commonv1.GeoPoint{Latitude: lat, Longitude: lon, SpeedMps: speed},
 	}, nil
