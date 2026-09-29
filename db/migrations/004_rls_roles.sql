@@ -31,7 +31,7 @@ ALTER TABLE geofences FORCE ROW LEVEL SECURITY;
 ALTER TABLE vehicle_geofence_state FORCE ROW LEVEL SECURITY;
 ALTER TABLE gps_positions FORCE ROW LEVEL SECURITY;
 
-ALTER FUNCTION auth_lookup_user(TEXT) OWNER TO omnifleet_owner;
+ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
 
 GRANT USAGE ON SCHEMA public TO omnifleet_app;
 GRANT USAGE ON TYPE user_role TO omnifleet_app;
