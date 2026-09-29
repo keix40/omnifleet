@@ -71,7 +71,9 @@ jobs:
       - name: RLS integration tests (omnifleet_app role)
         env:
           APP_DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
-        run: cd pkg && go test ./db -count=1
+        run: |
+          cd pkg && go test ./db -count=1
+          go test ./events -count=1 -run RelayPending
       - name: Service unit tests
         run: |
           cd services/auth && go test ./...

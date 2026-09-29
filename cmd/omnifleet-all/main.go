@@ -27,6 +27,8 @@ import (
 
 func main() {
 	_ = os.Setenv("OMNIFLEET_SHARED_NATS", "1")
+	// Geofencing runs the shared outbox relay; dispatch must not poll the same table.
+	_ = os.Setenv("OMNIFLEET_DISABLE_SECONDARY_OUTBOX_RELAY", "1")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
