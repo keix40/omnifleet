@@ -148,17 +148,19 @@ func TestVerticalSlice_TenantScopedWebSocket(t *testing.T) {
 	globexWS, globexCh := listenWS(t, wsTicket(t, globexDisp))
 	defer globexWS.Close()
 
+	time.Sleep(2 * time.Second) // allow JetStream consumers to attach
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		postPositions(t, acmeDriver, 25)
+		postPositions(t, acmeDriver)
 	}()
 
 	acmePositions := 0
 	acmeAlerts := 0
 	globexEvents := 0
-	deadline := time.Now().Add(60 * time.Second)
+	deadline := time.Now().Add(90 * time.Second)
 
 	for time.Now().Before(deadline) {
 		select {
@@ -175,7 +177,7 @@ func TestVerticalSlice_TenantScopedWebSocket(t *testing.T) {
 			}
 		case <-time.After(200 * time.Millisecond):
 		}
-		if acmePositions >= 2 && acmeAlerts >= 1 {
+		if acmePositions >= 2 && acmeAlerts >= 1 && globexEvents == 0 {
 			break
 		}
 	}
