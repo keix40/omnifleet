@@ -140,19 +140,31 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 		if err != nil {
 			return err
 		}
-		defer rows.Close()
-
+		type gfRow struct {
+			id, name string
+			inside   bool
+		}
+		var geofences []gfRow
 		for rows.Next() {
-			var gfID, name string
-			var inside bool
-			if err := rows.Scan(&gfID, &name, &inside); err != nil {
+			var r gfRow
+			if err := rows.Scan(&r.id, &r.name, &r.inside); err != nil {
+				rows.Close()
 				return err
 			}
+			geofences = append(geofences, r)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return err
+		}
+		rows.Close()
+
+		for _, g := range geofences {
 			var wasInside bool
 			err := tx.QueryRow(ctx, `
 				SELECT inside FROM vehicle_geofence_state
 				WHERE tenant_id = $1::uuid AND vehicle_id = $2::uuid AND geofence_id = $3::uuid
-			`, tenantID, vehicleID, gfID).Scan(&wasInside)
+			`, tenantID, vehicleID, g.id).Scan(&wasInside)
 			if err != nil && err != pgx.ErrNoRows {
 				return err
 			}
@@ -160,32 +172,32 @@ func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID strin
 				wasInside = false
 			}
 
-			if inside != wasInside {
+			if g.inside != wasInside {
 				eventType := "enter"
-				if !inside {
+				if !g.inside {
 					eventType = "exit"
 				}
-				out = append(out, geofenceEval{GeofenceID: gfID, GeofenceName: name, EventType: eventType})
+				out = append(out, geofenceEval{GeofenceID: g.id, GeofenceName: g.name, EventType: eventType})
 				_, err = tx.Exec(ctx, `
 					INSERT INTO vehicle_geofence_state (tenant_id, vehicle_id, geofence_id, inside, updated_at)
 					VALUES ($1::uuid, $2::uuid, $3::uuid, $4, now())
 					ON CONFLICT (tenant_id, vehicle_id, geofence_id)
 					DO UPDATE SET inside = EXCLUDED.inside, updated_at = now()
-				`, tenantID, vehicleID, gfID, inside)
+				`, tenantID, vehicleID, g.id, g.inside)
 				if err != nil {
 					return err
 				}
 				pendingAlerts = append(pendingAlerts, events.AlertEvent{
 					TenantID:     tenantID,
 					VehicleID:    vehicleID,
-					GeofenceID:   gfID,
-					GeofenceName: name,
+					GeofenceID:   g.id,
+					GeofenceName: g.name,
 					EventType:    eventType,
-					Message:      fmt.Sprintf("Vehicle %s %s geofence %s", vehicleID, eventType, name),
+					Message:      fmt.Sprintf("Vehicle %s %s geofence %s", vehicleID, eventType, g.name),
 				})
 			}
 		}
-		return rows.Err()
+		return nil
 	})
 	if err != nil {
 		return nil, err
