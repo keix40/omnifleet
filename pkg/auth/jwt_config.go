@@ -20,6 +20,7 @@ type JWTSettings struct {
 }
 
 // DevModeEnabled returns true for local docker-compose and E2E runs.
+// It does not change CORS or HTTP routes — only allows a dev JWT fallback when JWT_SECRET is unset.
 func DevModeEnabled() bool {
 	return os.Getenv("OMNIFLEET_DEV_MODE") == "1" || os.Getenv("E2E_COMPOSE") == "1"
 }

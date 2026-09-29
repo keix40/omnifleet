@@ -16,7 +16,9 @@ run_migration db/migrations/001_init.sql
 run_migration db/migrations/002_timescale.sql
 run_migration db/migrations/003_auth_lookup.sql
 run_migration db/seed/001_demo_tenants.sql
-run_migration db/seed/002_admin_users.sql
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+chmod +x "$ROOT/scripts/seed-demo-users.sh"
+"$ROOT/scripts/seed-demo-users.sh"
 run_migration db/migrations/004_rls_roles.sql
 run_migration db/migrations/005_rls_with_check.sql
 run_migration db/migrations/006_composite_tenant_fks.sql

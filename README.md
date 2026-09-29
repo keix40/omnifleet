@@ -145,7 +145,9 @@ Single-process API for Render’s **free** web tier (512 MB, no private networki
 | NATS (optional) | [Synadia Cloud](https://www.synadia.com/cloud) | Set `NATS_EMBEDDED=0`, `NATS_URL`, `NATS_TLS=true`, `NATS_CREDS` |
 | Dashboard | [Vercel](https://vercel.com) | Root `web/dashboard`; set env vars below |
 
-**Render env (minimum):** `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `OMNIFLEET_SHARED_NATS=1`, `NATS_EMBEDDED=1` (default in `render.yaml`), `OMNIFLEET_APP_PASSWORD` (when using dual-role bootstrap).
+**Render env (minimum):** `DATABASE_URL` (use the `omnifleet_app` URL printed by `scripts/bootstrap-neon.sh`), `JWT_SECRET` (≥32 chars), `OMNIFLEET_SHARED_NATS=1`, `NATS_EMBEDDED=1`, `CORS_ALLOWED_ORIGINS` (include `https://omnifleet-dashboard.vercel.app`). Do **not** set `OMNIFLEET_DEV_MODE` in production — it is only for local/docker when `JWT_SECRET` is omitted.
+
+**Neon bootstrap (one-time):** set `OMNIFLEET_APP_PASSWORD` and optional `SEED_DEMO_PASSWORD` when running `scripts/bootstrap-neon.sh`; those vars are not consumed by the running API.
 
 **Vercel env:**
 

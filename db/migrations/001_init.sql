@@ -3,16 +3,22 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TYPE user_role AS ENUM ('admin', 'dispatcher', 'driver', 'customer');
+DO $$
+BEGIN
+    CREATE TYPE user_role AS ENUM ('admin', 'dispatcher', 'driver', 'customer');
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END
+$$;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -22,7 +28,7 @@ CREATE TABLE users (
     UNIQUE (tenant_id, email)
 );
 
-CREATE TABLE vehicles (
+CREATE TABLE IF NOT EXISTS vehicles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     label TEXT NOT NULL,
@@ -30,7 +36,7 @@ CREATE TABLE vehicles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE geofences (
+CREATE TABLE IF NOT EXISTS geofences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -38,7 +44,7 @@ CREATE TABLE geofences (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE vehicle_geofence_state (
+CREATE TABLE IF NOT EXISTS vehicle_geofence_state (
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     vehicle_id UUID NOT NULL REFERENCES vehicles (id) ON DELETE CASCADE,
     geofence_id UUID NOT NULL REFERENCES geofences (id) ON DELETE CASCADE,
@@ -47,7 +53,7 @@ CREATE TABLE vehicle_geofence_state (
     PRIMARY KEY (tenant_id, vehicle_id, geofence_id)
 );
 
-CREATE TABLE gps_positions (
+CREATE TABLE IF NOT EXISTS gps_positions (
     id UUID NOT NULL DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants (id) ON DELETE CASCADE,
     vehicle_id UUID NOT NULL REFERENCES vehicles (id) ON DELETE CASCADE,
@@ -60,10 +66,10 @@ CREATE TABLE gps_positions (
     PRIMARY KEY (recorded_at, id)
 );
 
-CREATE INDEX idx_gps_positions_tenant_vehicle_time
+CREATE INDEX IF NOT EXISTS idx_gps_positions_tenant_vehicle_time
     ON gps_positions (tenant_id, vehicle_id, recorded_at DESC);
 
-CREATE INDEX idx_geofences_boundary ON geofences USING GIST (boundary);
+CREATE INDEX IF NOT EXISTS idx_geofences_boundary ON geofences USING GIST (boundary);
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
@@ -71,18 +77,23 @@ ALTER TABLE geofences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicle_geofence_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gps_positions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS tenant_isolation_users ON users;
 CREATE POLICY tenant_isolation_users ON users
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_vehicles ON vehicles;
 CREATE POLICY tenant_isolation_vehicles ON vehicles
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_geofences ON geofences;
 CREATE POLICY tenant_isolation_geofences ON geofences
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_vehicle_geofence_state ON vehicle_geofence_state;
 CREATE POLICY tenant_isolation_vehicle_geofence_state ON vehicle_geofence_state
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_gps_positions ON gps_positions;
 CREATE POLICY tenant_isolation_gps_positions ON gps_positions
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 

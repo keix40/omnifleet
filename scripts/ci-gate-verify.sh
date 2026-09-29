@@ -14,11 +14,17 @@ needs_web=0
 needs_infra=0
 needs_e2e=0
 needs_smoke=0
+needs_neon=0
 
 for f in "${CHANGED[@]}"; do
   case "$f" in
     pkg/*|gen/*|proto/*|services/*|db/*|go.work|cmd/omnifleet-all/*|scripts/bootstrap-db.sh|scripts/bootstrap-neon.sh|.github/workflows/go-services.yml)
       needs_go=1
+      ;;
+  esac
+  case "$f" in
+    db/*|scripts/bootstrap-neon.sh|scripts/seed-demo-users.sh|scripts/seedhash/*|pkg/auth/demo_seed.go|.github/workflows/neon-bootstrap.yml)
+      needs_neon=1
       ;;
   esac
   case "$f" in
@@ -49,9 +55,9 @@ for f in "${CHANGED[@]}"; do
 done
 
 echo "Changed files: ${#CHANGED[@]}"
-echo "Required workflows: go=$needs_go web=$needs_web infra=$needs_infra e2e=$needs_e2e smoke=$needs_smoke"
+echo "Required workflows: go=$needs_go web=$needs_web infra=$needs_infra e2e=$needs_e2e smoke=$needs_smoke neon=$needs_neon"
 
-if (( needs_go == 0 && needs_web == 0 && needs_infra == 0 && needs_e2e == 0 && needs_smoke == 0 )); then
+if (( needs_go == 0 && needs_web == 0 && needs_infra == 0 && needs_e2e == 0 && needs_smoke == 0 && needs_neon == 0 )); then
   echo "No path-filtered workflows apply to this diff; gate passes."
   exit 0
 fi
@@ -90,5 +96,6 @@ wait_for_workflow() {
 (( needs_infra == 1 )) && wait_for_workflow "infra.yml" "Infrastructure"
 (( needs_e2e == 1 )) && wait_for_workflow "e2e-compose.yml" "E2E Compose Slice"
 (( needs_smoke == 1 )) && wait_for_workflow "smoke-allinone.yml" "Smoke All-in-One"
+(( needs_neon == 1 )) && wait_for_workflow "neon-bootstrap.yml" "Neon Bootstrap"
 
 echo "All required workflows passed."

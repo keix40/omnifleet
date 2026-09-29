@@ -21,10 +21,16 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION auth_lookup_user(TEXT, TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT, TEXT) TO omnifleet_app;
 
-ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
-
--- Login join needs tenant slug resolution under SECURITY DEFINER (omnifleet_owner).
-ALTER TABLE tenants OWNER TO omnifleet_owner;
-GRANT SELECT ON tenants TO omnifleet_app;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_app') THEN
+        GRANT EXECUTE ON FUNCTION auth_lookup_user(TEXT, TEXT) TO omnifleet_app;
+        GRANT SELECT ON tenants TO omnifleet_app;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'omnifleet_owner') THEN
+        ALTER FUNCTION auth_lookup_user(TEXT, TEXT) OWNER TO omnifleet_owner;
+        ALTER TABLE tenants OWNER TO omnifleet_owner;
+    END IF;
+END
+$$;

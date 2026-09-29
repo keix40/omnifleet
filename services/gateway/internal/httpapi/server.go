@@ -56,9 +56,11 @@ type Server struct {
 	wsTickets      *auth.WSTicketStore
 	hub            *wsHub
 	nc             *nats.Conn
-	loginLimiter   *auth.LoginRateLimiter
-	dbPool         *pgxpool.Pool
-	replicaID      string
+	loginLimiter       *auth.LoginRateLimiter
+	dbPool             *pgxpool.Pool
+	replicaID          string
+	corsAllowedOrigins []string
+	wsUpgrader         websocket.Upgrader
 }
 
 func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
@@ -148,6 +150,7 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 	}
 
 	hub := newHub()
+	allowedOrigins := CORSAllowedOriginsFromEnv()
 	s := &Server{
 		authClient:          authv1.NewAuthServiceClient(authConn),
 		trackingClient:      trackingv1.NewTrackingServiceClient(trackConn),
@@ -160,8 +163,18 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 		hub:            hub,
 		nc:             nc,
 		loginLimiter:   auth.NewLoginRateLimiter(30, time.Minute),
-		dbPool:         dbPool,
-		replicaID:      replicaID,
+		dbPool:             dbPool,
+		replicaID:          replicaID,
+		corsAllowedOrigins: allowedOrigins,
+	}
+	s.wsUpgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				return true
+			}
+			return originAllowed(origin, s.corsAllowedOrigins)
+		},
 	}
 	go s.bridgeNATS(ctx, js)
 	cleanup := func() {
@@ -180,10 +193,25 @@ func NewServer(ctx context.Context, cfg Config) (*Server, func(), error) {
 }
 
 func (s *Server) Router() http.Handler {
+	if s.corsAllowedOrigins == nil {
+		s.corsAllowedOrigins = CORSAllowedOriginsFromEnv()
+	}
+	if s.wsUpgrader.CheckOrigin == nil {
+		allowed := s.corsAllowedOrigins
+		s.wsUpgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true
+				}
+				return originAllowed(origin, allowed)
+			},
+		}
+	}
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, middleware.RealIP, middleware.Logger, middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowedOrigins:   s.corsAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -326,10 +354,6 @@ func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("ready"))
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
 func (s *Server) handleWSTicket(w http.ResponseWriter, r *http.Request) {
 	claims := claimsFromContext(r.Context())
 	if !auth.HasPermission(claims.Role, auth.PermViewFleet) {
@@ -383,7 +407,7 @@ func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request, claims *
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
+	conn, err := s.wsUpgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
 		return
 	}

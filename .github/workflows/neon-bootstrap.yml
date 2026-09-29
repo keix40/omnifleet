@@ -1,0 +1,68 @@
+name: Neon Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - "db/**"
+      - "scripts/bootstrap-neon.sh"
+      - "scripts/seed-demo-users.sh"
+      - "scripts/seedhash/**"
+      - "pkg/auth/demo_seed.go"
+      - ".github/workflows/neon-bootstrap.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/**"
+      - "scripts/bootstrap-neon.sh"
+      - "scripts/seed-demo-users.sh"
+      - "scripts/seedhash/**"
+
+jobs:
+  neon-bootstrap:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Create Neon-like DB owner (non-superuser)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE USER neon_owner WITH PASSWORD 'neon_owner_pass' CREATEDB;
+          CREATE DATABASE omnifleet OWNER neon_owner;
+          SQL
+          psql -h localhost -U postgres -d omnifleet -v ON_ERROR_STOP=1 <<'SQL'
+          GRANT ALL ON SCHEMA public TO neon_owner;
+          CREATE EXTENSION IF NOT EXISTS postgis;
+          SQL
+      - name: Bootstrap twice (idempotent)
+        env:
+          DATABASE_URL: postgres://neon_owner:neon_owner_pass@localhost:5432/omnifleet?sslmode=disable
+          OMNIFLEET_APP_PASSWORD: ci_app_secret
+          SEED_DEMO_PASSWORD: demo-password-change-me
+        run: |
+          chmod +x scripts/bootstrap-neon.sh scripts/seed-demo-users.sh
+          ./scripts/bootstrap-neon.sh
+          ./scripts/bootstrap-neon.sh
+      - name: RLS applies to omnifleet_app
+        env:
+          APP_DATABASE_URL: postgres://omnifleet_app:ci_app_secret@localhost:5432/omnifleet?sslmode=disable
+          CI: "true"
+        run: cd pkg && go test ./db -count=1 -run 'TestRLS'
