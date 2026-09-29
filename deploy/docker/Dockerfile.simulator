@@ -1,0 +1,10 @@
+FROM golang:1.22-alpine AS build
+WORKDIR /src
+COPY scripts/gps-simulator ./scripts/gps-simulator
+WORKDIR /src/scripts/gps-simulator
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o /out/gps-simulator .
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=build /out/gps-simulator /gps-simulator
+ENTRYPOINT ["/gps-simulator"]

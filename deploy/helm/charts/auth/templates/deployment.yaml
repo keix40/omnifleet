@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omnifleet-auth
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 50051
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 5
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 5

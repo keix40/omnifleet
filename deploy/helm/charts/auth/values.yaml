@@ -1,0 +1,6 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/keix40/omnifleet/auth
+  tag: latest
+pdb:
+  minAvailable: 1

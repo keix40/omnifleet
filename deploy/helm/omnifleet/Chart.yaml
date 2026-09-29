@@ -1,0 +1,8 @@
+apiVersion: v2
+name: omnifleet
+description: OmniFleet microservices umbrella chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+# Install subcharts from deploy/helm/charts/* independently or via CI matrix.

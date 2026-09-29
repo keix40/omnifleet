@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package tracking.v1;
+
+import "common/v1/common.proto";
+
+option go_package = "github.com/keix40/omnifleet/gen/go/tracking/v1;trackingv1";
+
+service TrackingService {
+  rpc IngestPosition(IngestPositionRequest) returns (IngestPositionResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message IngestPositionRequest {
+  string tenant_id = 1;
+  string vehicle_id = 2;
+  string driver_id = 3;
+  common.v1.GeoPoint point = 4;
+  int64 recorded_at_unix = 5;
+}
+
+message IngestPositionResponse {
+  string position_id = 1;
+  bool accepted = 2;
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+}

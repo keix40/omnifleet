@@ -1,0 +1,72 @@
+name: E2E Compose Slice
+
+on:
+  pull_request:
+    paths:
+      - "pkg/**"
+      - "services/**"
+      - "db/**"
+      - "docker-compose.yml"
+      - "tests/e2e/**"
+      - "scripts/**"
+      - ".github/workflows/e2e-compose.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pkg/**"
+      - "services/**"
+      - "db/**"
+      - "docker-compose.yml"
+      - "tests/e2e/**"
+
+jobs:
+  vertical-slice:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start core stack
+        run: |
+          docker compose up --build -d postgres nats auth tracking geofencing gateway
+
+      - name: Wait for gateway and seeded auth
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/healthz >/dev/null && \
+              curl -sf -X POST http://localhost:8080/api/v1/auth/login \
+                -H "Content-Type: application/json" \
+                -d '{"email":"dispatcher@acme.test","password":"demo-password-change-me"}' | grep -q access_token; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs
+          exit 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Reset geofence state for deterministic enter events
+        run: |
+          docker compose exec -T postgres psql -U omnifleet -d omnifleet -c "DELETE FROM vehicle_geofence_state;"
+
+      - name: End-to-end tenant isolation
+        env:
+          GOWORK: "off"
+          E2E_COMPOSE: "1"
+          GATEWAY_URL: http://localhost:8080
+          GATEWAY_WS_URL: ws://localhost:8080
+          GEOFENCING_GRPC_ADDR: localhost:50053
+        run: |
+          cd tests/e2e
+          go mod tidy
+          go test -v -count=1 -timeout 3m .
+
+      - name: Compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

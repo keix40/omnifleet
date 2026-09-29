@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package notifications.v1;
+
+option go_package = "github.com/keix40/omnifleet/gen/go/notifications/v1;notificationsv1";
+
+// TODO: email/SMS/push for geofence alerts and dispatch updates.
+service NotificationsService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+}

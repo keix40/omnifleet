@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package geofencing.v1;
+
+import "common/v1/common.proto";
+
+option go_package = "github.com/keix40/omnifleet/gen/go/geofencing/v1;geofencingv1";
+
+service GeofencingService {
+  rpc EvaluatePosition(EvaluatePositionRequest) returns (EvaluatePositionResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message EvaluatePositionRequest {
+  string tenant_id = 1;
+  string vehicle_id = 2;
+  common.v1.GeoPoint point = 3;
+}
+
+message GeofenceEvent {
+  string geofence_id = 1;
+  string geofence_name = 2;
+  string event_type = 3; // enter | exit
+}
+
+message EvaluatePositionResponse {
+  repeated GeofenceEvent events = 1;
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+}

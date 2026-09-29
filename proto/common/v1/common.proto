@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "github.com/keix40/omnifleet/gen/go/common/v1;commonv1";
+
+message TenantRef {
+  string tenant_id = 1;
+}
+
+message GeoPoint {
+  double latitude = 1;
+  double longitude = 2;
+  double altitude_m = 3;
+  double speed_mps = 4;
+  double heading_deg = 5;
+}
+
+message Pagination {
+  int32 page_size = 1;
+  string page_token = 2;
+}

@@ -1,0 +1,13 @@
+go 1.22
+
+use (
+	./pkg
+	./services/auth
+	./services/billing
+	./services/dispatch
+	./services/eta
+	./services/gateway
+	./services/geofencing
+	./services/notifications
+	./services/tracking
+)

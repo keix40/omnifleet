@@ -1,0 +1,75 @@
+name: Go Services
+
+on:
+  pull_request:
+    paths:
+      - "pkg/**"
+      - "gen/**"
+      - "proto/**"
+      - "services/**"
+      - "db/**"
+      - "go.work"
+      - "scripts/bootstrap-db.sh"
+      - ".github/workflows/go-services.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pkg/**"
+      - "gen/**"
+      - "proto/**"
+      - "services/**"
+      - "db/**"
+      - "go.work"
+      - "scripts/bootstrap-db.sh"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: omnifleet
+          POSTGRES_PASSWORD: omnifleet
+          POSTGRES_DB: omnifleet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U omnifleet -d omnifleet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Install buf
+        run: |
+          curl -sSL "https://github.com/bufbuild/buf/releases/download/v1.47.2/buf-Linux-x86_64" -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
+      - name: Buf generate
+        run: buf generate
+      - name: Bootstrap database
+        env:
+          PGPASSWORD: omnifleet
+          PGHOST: localhost
+          PGUSER: omnifleet
+          PGDATABASE: omnifleet
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          chmod +x scripts/bootstrap-db.sh
+          ./scripts/bootstrap-db.sh
+      - name: Unit tests
+        run: cd pkg && go test ./...
+      - name: RLS integration tests (omnifleet_app role)
+        env:
+          APP_DATABASE_URL: postgres://omnifleet_app:omnifleet_app@localhost:5432/omnifleet?sslmode=disable
+        run: cd pkg && go test ./db -run TestRLS -count=1
+      - name: Build services
+        run: |
+          for svc in auth gateway tracking geofencing eta dispatch billing notifications; do
+            (cd services/$svc && go build ./...)
+          done
