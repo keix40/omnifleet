@@ -21,6 +21,12 @@ run_migration() {
   "${PSQL[@]}" -f "$1"
 }
 
+schema_bootstrap_complete() {
+  "${PSQL[@]}" -tAc \
+    "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'dispatch_jobs'" \
+    | grep -q 1
+}
+
 ensure_omnifleet_app_role() {
   "${PSQL[@]}" <<SQL
 DO \$\$
