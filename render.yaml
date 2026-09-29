@@ -13,18 +13,21 @@ services:
         value: "8080"
       - key: OMNIFLEET_SHARED_NATS
         value: "1"
+      - key: NATS_EMBEDDED
+        value: "1"
       - key: OMNIFLEET_DEV_MODE
         value: "0"
       - key: DATABASE_URL
         sync: false
       - key: OMNIFLEET_APP_PASSWORD
         sync: false
+      # Optional: set NATS_EMBEDDED=0 and provide external NATS (e.g. Synadia Cloud).
       - key: NATS_URL
         sync: false
       - key: NATS_CREDS
         sync: false
       - key: NATS_TLS
-        value: "true"
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ISSUER

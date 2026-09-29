@@ -35,7 +35,18 @@ func main() {
 	if dsn == "" {
 		log.Fatal("DATABASE_URL required")
 	}
+
+	var embedded *embeddedNATS
 	natsURL := env("NATS_URL", "nats://localhost:4222")
+	if envBool("NATS_EMBEDDED") {
+		var err error
+		embedded, err = startEmbeddedNATS()
+		if err != nil {
+			log.Fatalf("embedded NATS: %v", err)
+		}
+		defer embedded.shutdown()
+		natsURL = embedded.clientURL()
+	}
 	_ = os.Setenv("NATS_URL", natsURL)
 
 	jwtSettings, err := auth.LoadJWTSettingsFromEnv()
@@ -134,7 +145,12 @@ func main() {
 
 	go func() {
 		log.Printf("omnifleet-all listening on %s (loopback gRPC)", addr)
-		log.Printf("NATS: %s", events.SharedConnectionCountHint())
+		if embedded != nil {
+			log.Printf("NATS: embedded JetStream at %s (%s)", natsURL, events.SharedConnectionCountHint())
+		} else {
+			log.Printf("NATS: external %s (%s)", natsURL, events.SharedConnectionCountHint())
+		}
+		logProcessRSS()
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("http: %v", err)
 		}
