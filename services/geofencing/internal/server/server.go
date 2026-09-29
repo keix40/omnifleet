@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	geofencingv1 "github.com/keix40/omnifleet/gen/go/geofencing/v1"
@@ -23,6 +24,7 @@ type Server struct {
 	js        jetstream.JetStream
 	publisher *events.Publisher
 	nc        *nats.Conn
+	evalMu    sync.Mutex // JetStream may deliver concurrently; pgx tx + state updates must be serial
 }
 
 func New(ctx context.Context, dsn, natsURL string) (*Server, func(), error) {
@@ -67,6 +69,7 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 		Durable:       "geofencing-positions",
 		FilterSubject: "fleet.>",
 		AckPolicy:     jetstream.AckExplicitPolicy,
+		MaxAckPending: 1,
 	})
 	if err != nil {
 		return err
@@ -82,8 +85,9 @@ func (s *Server) RunConsumer(ctx context.Context) error {
 			return
 		}
 		msgCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		if _, err := s.evaluateInternal(msgCtx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude); err != nil {
+		_, err := s.evaluateInternal(msgCtx, ev.TenantID, ev.VehicleID, ev.Latitude, ev.Longitude)
+		cancel()
+		if err != nil {
 			log.Printf("geofence evaluate: %v", err)
 			_ = msg.Nak()
 			return
@@ -122,6 +126,9 @@ type geofenceEval struct {
 }
 
 func (s *Server) evaluateInternal(ctx context.Context, tenantID, vehicleID string, lat, lon float64) ([]geofenceEval, error) {
+	s.evalMu.Lock()
+	defer s.evalMu.Unlock()
+
 	var out []geofenceEval
 	var pendingAlerts []events.AlertEvent
 	err := db.WithTenant(ctx, s.pool, tenantID, func(tx pgx.Tx) error {
